@@ -1,5 +1,5 @@
 output "oidc_provider_arn" {
-  description = "IAM OIDC provider for app.terraform.io."
+  description = "IAM OIDC provider for app.terraform.io. Used by HCP Terraform dynamic AWS credentials."
   value       = aws_iam_openid_connect_provider.tfc.arn
 }
 
