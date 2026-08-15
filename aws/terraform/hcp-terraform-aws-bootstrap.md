@@ -163,6 +163,41 @@ Confirm the copy. Terraform uploads the local state into workspace `kong-ai-gate
 
 ---
 
+## Choose your workflow (HCP workspace settings)
+
+When HCP asks **Choose your workflow**, pick by workspace. These are different workspaces. Do not copy bootstrap VCS settings onto workloads.
+
+| Workspace | Choose | GitHub repo / branch in HCP? |
+| --- | --- | --- |
+| `kong-ai-gateway-aws-bootstrap` | **Version control workflow** | Yes. Connect GitHub, set branch and path. |
+| `kong-ai-gateway-aws-workload` | **CLI-Driven Workflow** | **No.** Do not connect a repo, do not pick a branch. |
+
+### Bootstrap — Version control
+
+HCP clones GitHub itself and auto-plans when matching files change.
+
+- Provider: GitHub
+- Repository: `UttamGiri/kong-ai-gateway`
+- VCS branch: `develop`
+- Terraform working directory: `aws/terraform/bootstrap`
+- Triggers: prefixes `aws/terraform/bootstrap` (not Patterns `**`)
+- Auto-apply: off (plan, then Confirm)
+
+### Workloads — CLI-driven (GitHub Action)
+
+HCP is **not** linked to GitHub. There is no repository picker, no branch, no working-directory trigger on that workspace.
+
+The GitHub connection lives in **Actions**, not in HCP Version Control:
+
+- Workflow: `.github/workflows/terraform-workloads.yml`
+- Trigger: **Run workflow** (`workflow_dispatch`), not a git push
+- The Action runs `terraform` against workspace `kong-ai-gateway-aws-workload`
+- Repo secret: `TF_API_TOKEN`
+
+If you connect GitHub on the workloads workspace anyway, a push will start HCP runs and GitHub Actions cannot be the only trigger.
+
+---
+
 ## What bootstrap creates
 
 | Object | Purpose |

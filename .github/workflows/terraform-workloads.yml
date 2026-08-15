@@ -9,13 +9,18 @@ on:
         description: Apply the plan to AWS (unchecked = plan only)
         type: boolean
         default: false
+  push:
+    branches: [develop]
+    paths:
+      - "aws/terraform/workloads/**"
+      - ".github/workflows/terraform-workloads.yml"
 
 permissions:
   contents: read
 
 env:
   TF_CLOUD_ORGANIZATION: vaflt-org
-  TF_WORKSPACE: kong-ai-gateway-aws
+  TF_WORKSPACE: kong-ai-gateway-aws-workload
   TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
 jobs:
@@ -32,7 +37,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.5.7
+          terraform_version: 1.15.8
           terraform_wrapper: false
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 

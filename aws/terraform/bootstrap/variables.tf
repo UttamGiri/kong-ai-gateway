@@ -48,7 +48,7 @@ variable "tfc_project_name" {
 variable "tfc_workspace_name" {
   type        = string
   description = "HCP Terraform workspace for workloads. State lives here from the first workload apply."
-  default     = "kong-ai-gateway-aws"
+  default     = "kong-ai-gateway-aws-workload"
 }
 
 variable "tfc_bootstrap_workspace_name" {

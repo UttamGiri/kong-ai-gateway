@@ -12,7 +12,7 @@ terraform {
     organization = "vaflt-org"
 
     workspaces {
-      name = "kong-ai-gateway-aws"
+      name = "kong-ai-gateway-aws-workload"
     }
   }
 }
