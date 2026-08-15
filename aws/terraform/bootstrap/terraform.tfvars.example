@@ -1,6 +1,6 @@
 aws_region              = "us-east-1"
 aws_profile             = "kong-ai-gateway-admin"
-tfc_organization_name   = "your-hcp-terraform-org"
+tfc_organization_name   = "vaflt-org"
 create_tfc_organization = false
 tfc_organization_email  = "you@example.com"
 tfc_project_name               = "kong-ai-gateway"

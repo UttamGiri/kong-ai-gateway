@@ -10,7 +10,7 @@
 
 terraform {
   cloud {
-    organization = "your-hcp-terraform-org"
+    organization = "vaflt-org"
 
     workspaces {
       name = "kong-ai-gateway-aws-bootstrap"
