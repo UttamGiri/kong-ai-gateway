@@ -1,19 +1,18 @@
-# CLI-driven HCP Terraform for workloads. This workspace is not VCS-connected.
-# A push to develop does not start a plan. Run this workflow from the Actions tab.
+# CLI-driven HCP Terraform for workloads. No VCS on this workspace.
+# Start from Actions → Terraform workloads → Run workflow → choose plan or apply.
 name: Terraform workloads
 
 on:
   workflow_dispatch:
     inputs:
-      apply:
-        description: Apply the plan to AWS (unchecked = plan only)
-        type: boolean
-        default: false
-  push:
-    branches: [develop]
-    paths:
-      - "aws/terraform/workloads/**"
-      - ".github/workflows/terraform-workloads.yml"
+      command:
+        description: Terraform command
+        type: choice
+        required: true
+        default: plan
+        options:
+          - plan
+          - apply
 
 permissions:
   contents: read
@@ -25,8 +24,9 @@ env:
 
 jobs:
   terraform:
-    name: HCP Terraform
+    name: ${{ inputs.command }}
     runs-on: ubuntu-latest
+    environment: ${{ inputs.command == 'apply' && 'workloads' || 'plan' }}
     defaults:
       run:
         working-directory: aws/terraform/workloads
@@ -48,5 +48,5 @@ jobs:
         run: terraform plan -input=false -no-color
 
       - name: Terraform apply
-        if: ${{ inputs.apply }}
+        if: ${{ inputs.command == 'apply' }}
         run: terraform apply -input=false -auto-approve -no-color

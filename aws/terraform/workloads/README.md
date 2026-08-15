@@ -6,8 +6,10 @@ Do **not** connect Version Control on this workspace. There is no GitHub reposit
 
 GitHub is wired through **Actions**, not HCP:
 
-- [Terraform workloads](../../.github/workflows/terraform-workloads.yml) — Actions → Run workflow
+- [Terraform workloads](../../.github/workflows/terraform-workloads.yml)
+- Actions → **Terraform workloads** → **Run workflow** → dropdown **plan** or **apply**
+- A git push does **not** start this workflow
 - Secret `TF_API_TOKEN` (HCP user token)
 - Working directory in the Action: `aws/terraform/workloads`
 
-A git push does not start this workspace. Bootstrap (`kong-ai-gateway-aws-bootstrap`) is the VCS-connected workspace; see [hcp-terraform-aws-bootstrap.md](../hcp-terraform-aws-bootstrap.md#choose-your-workflow-hcp-workspace-settings).
+Apply uses GitHub Environment `workloads` so you can require reviewers later. Plan uses Environment `plan` (no protection needed).
