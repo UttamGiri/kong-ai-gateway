@@ -1,6 +1,6 @@
 # Kong AI Gateway Helm chart
 
-Deploys into namespace `kong-ai-gateway` (created by `aws/helm/namespace`). Image is Kong OSS + `custom-header` plugin, pushed by **Docker publish Kong AI Gateway**.
+Deploys into namespace `kong-ai-gateway` (created by `aws/helm/namespace`). Image is Kong Gateway Enterprise (`kong/kong-gateway:3.9`) + `custom-header` plugin, pushed by **Docker publish Kong AI Gateway**.
 
 **Deploy order**
 

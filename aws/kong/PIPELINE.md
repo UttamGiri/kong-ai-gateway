@@ -9,7 +9,7 @@ Trigger: **Run workflow** only (`workflow_dispatch`). A git push does **not** bu
 ```mermaid
 flowchart LR
     subgraph git ["Git develop"]
-        DF["aws/kong/Dockerfile<br/>FROM kong:3.9"]
+        DF["aws/kong/Dockerfile<br/>FROM kong/kong-gateway:3.9"]
         PLUG["plugins/custom-header"]
         DF --> PLUG
     end
@@ -122,7 +122,7 @@ What the job does:
 1. Checkout `aws/kong`
 2. Read `image.tag` from `values.yaml` and add **1** to the patch (`0.1.0` → `0.1.1` → `0.1.2`)
 3. `docker login` to Docker Hub
-4. `docker build` (`FROM kong:3.9`, `COPY` plugin + `kong.yml`)
+4. `docker build` (`FROM kong/kong-gateway:3.9`, `COPY` plugin + `kong.yml`)
 5. `docker push`
    - `docker.io/uttamgiri32/kong-ai-gateway:<version>`
    - `docker.io/uttamgiri32/kong-ai-gateway:<git-sha>`

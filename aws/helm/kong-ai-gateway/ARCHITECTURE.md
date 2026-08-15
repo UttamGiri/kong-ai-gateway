@@ -2,7 +2,7 @@
 
 Target flow. **Docker Registry (Docker Hub)**, not ECR. Namespace `kong-ai-gateway` already exists. Argo CD in `argocd` deploys this Helm chart.
 
-**Free image:** Kong Gateway OSS (`kong:3.9`). Dockerfile extends it and `COPY`s `aws/kong/plugins/custom-header`.
+**Base image:** Kong Gateway Enterprise (`kong/kong-gateway:3.9`). Dockerfile extends it and `COPY`s `aws/kong/plugins/custom-header`. Not Kong Konnect (no login dashboard in this image).
 
 ---
 
@@ -25,7 +25,7 @@ The plugin lives **outside** this Helm chart. The Dockerfile copies it **into** 
 ```mermaid
 flowchart LR
     subgraph src ["Git develop"]
-        BASE["FROM kong:OSS<br/>free Kong Gateway"]
+        BASE["FROM kong/kong-gateway:3.9<br/>Enterprise"]
         PLUG["aws/kong/plugins/<name><br/>custom plugin folder"]
         DF["aws/kong/Dockerfile"]
         BASE --> DF
@@ -57,7 +57,7 @@ sequenceDiagram
 
     Dev->>GH: Dockerfile + plugin folder
     GH->>GHA: push / workflow_dispatch
-    GHA->>GHA: docker build FROM kong OSS COPY plugin
+    GHA->>GHA: docker build FROM kong/kong-gateway COPY plugin
     GHA->>REG: docker push user/kong-ai-gateway:sha
     Dev->>Helm: image.tag = sha
     Note over GHA,REG: Helm does not build the image. Nodes pull it.
@@ -87,7 +87,7 @@ flowchart TB
         DEPLOY["Deployment 1 replica"]
         SVC["Service ClusterIP :8000"]
         MESH["Istio Gateway / VS / DR / PA"]
-        POD["Pod: Kong OSS + plugin<br/>+ Istio sidecar"]
+        POD["Pod: Kong Enterprise + plugin<br/>+ Istio sidecar"]
         DEPLOY --> POD
         SVC --> POD
         MESH --> SVC
@@ -109,7 +109,7 @@ Order already done vs next:
 | Terraform EKS | done |
 | Namespaces `argocd` + `kong-ai-gateway` | done |
 | Argo CD install | done |
-| Dockerfile `FROM kong` + plugin COPY | done (`aws/kong`) |
+| Dockerfile `FROM kong/kong-gateway` + plugin COPY | done (`aws/kong`) |
 | GitHub Action build/push | done (Actions → Docker publish Kong AI Gateway) |
 | Argo CD Application for this chart | done (`aws/argocd/kong-ai-gateway.yaml`) |
 

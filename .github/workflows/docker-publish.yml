@@ -1,4 +1,4 @@
-# CLI-driven: build Kong OSS + plugin image, push to Docker Hub, pin Helm image.tag.
+# CLI-driven: build Kong Gateway Enterprise + plugin image, push to Docker Hub, pin Helm image.tag.
 # Actions → Docker publish Kong AI Gateway → Run workflow from develop.
 # Secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
 # Image tag is always values.yaml patch + 1. No workflow input.
