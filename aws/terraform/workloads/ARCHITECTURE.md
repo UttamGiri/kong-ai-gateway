@@ -1,6 +1,6 @@
 # AWS workloads architecture
 
-Target layout for **kong-ai-gateway-aws-workload** (HCP Version control: plan on the workspace, Confirm & Apply). Image registry is a **Docker Registry** (Docker Hub or self-hosted `registry:2`), not ECR.
+Target layout for **kong-ai-gateway-aws-workload** (HCP CLI-driven, GitHub Action plan/apply). Image registry is a **Docker Registry** (Docker Hub or self-hosted `registry:2`), not ECR.
 
 | Environment | Path | Contents |
 | --- | --- | --- |
@@ -16,13 +16,15 @@ Namespaces are **not** Terraform. They are a Helm chart (`aws/helm/namespace`) a
 ```text
 kong-ai-gateway/
 ├── .github/workflows/
-│   └── docker-publish.yml
+│   ├── terraform-workloads.yml    # CLI plan/apply for HCP workloads
+│   └── docker-publish.yml         # later: docker build + docker push
 ├── aws/
 │   ├── helm/
 │   │   ├── namespace/                 # TWO namespaces only
 │   │   │   └── templates/
 │   │   │       ├── argocd.yaml
 │   │   │       └── kong-ai-gateway.yaml
+│   │   ├── argocd/                    # values.yaml for official argo/argo-cd chart
 │   │   └── kong-ai-gateway/           # app + mesh (not namespaces)
 │   │       └── templates/
 │   │           ├── deployment.yaml    # pods
@@ -46,6 +48,7 @@ kong-ai-gateway/
 flowchart TB
     subgraph repo ["GitHub: UttamGiri/kong-ai-gateway  branch develop"]
         subgraph gha [".github/workflows"]
+            TF["terraform-workloads.yml<br/>plan / apply"]
             DOCKER["docker-publish.yml later<br/>docker build + docker push"]
         end
 
@@ -56,20 +59,22 @@ flowchart TB
 
         subgraph helm ["aws/helm"]
             NSCHART["namespace/<br/>creates ns argocd<br/>creates ns kong-ai-gateway"]
+            ARGOCHART["argocd/values.yaml<br/>official argo/argo-cd chart"]
             KONGCHART["kong-ai-gateway/<br/>pods, Service, Istio"]
         end
     end
 
-    DEV -->|"git push develop"| HCP["HCP workspace<br/>kong-ai-gateway-aws-workload<br/>plan then Confirm and Apply"]
+    TF --> HCP["HCP workspace<br/>kong-ai-gateway-aws-workload"]
     HCP -->|"remote apply"| EKS["EKS — no namespaces yet"]
     NSCHART -->|"Helm"| NS1["namespace argocd"]
     NSCHART -->|"Helm"| NS2["namespace kong-ai-gateway<br/>istio-injection=enabled"]
     EKS --> NS1
     EKS --> NS2
+    ARGOCHART -->|"helm -n argocd"| ARGO["Argo CD"]
+    NS1 --> ARGO
     DOCKER -->|"docker push"| REG["Docker Registry"]
     KONGCHART -->|"image pull"| REG
     KONGCHART -->|"deploy into"| NS2
-    NS1 --> ARGO["Argo CD"]
     ARGO -->|"sync Helm chart"| KONGCHART
 ```
 
@@ -308,7 +313,7 @@ All demo resources are behind `module.demo` with `count = var.enabled ? 1 : 0`. 
 | `true` | Create / keep VPC, EKS, nodes |
 | `false` | Hard delete (EBS `delete_on_termination`, no KMS, no S3 retain) |
 
-HCP: set `enabled = false`, Start new run, Confirm & Apply. Helm/Istio load balancers are not in state; destroy tries to delete tagged ELBs first so the VPC can go.
+GitHub Action: apply + uncheck **enabled**. Helm/Istio load balancers are not in state; destroy tries to delete tagged ELBs first so the VPC can go.
 
 Larger nodes (`t3.large` × 2) add ~$2/day. Turning the cluster off nights/weekends is the main way to cut this (EKS control plane still bills if the cluster exists).
 
@@ -318,6 +323,6 @@ These are list prices, not a quote. Check [AWS Pricing](https://aws.amazon.com/e
 
 ## 9. HCP / GitHub
 
-- Workspace **kong-ai-gateway-aws-workload**: **Version control**. Branch **`develop`**. Working directory **`aws/terraform/workloads/dev`**. Trigger prefix `aws/terraform/workloads`. Auto-apply off.
-- Push matching files → plan appears on the HCP workspace → **Confirm & Apply**.
-- Bootstrap: same VCS pattern on `aws/terraform/bootstrap`.
+- Workspace **kong-ai-gateway-aws-workload**: **CLI-Driven**. Working directory **`aws/terraform/workloads/dev`**. No GitHub VCS link on this workspace.
+- Actions → **Terraform workloads** → branch **`develop`** → **plan** or **apply**. Secret `TF_API_TOKEN`.
+- Bootstrap: Version control on `aws/terraform/bootstrap`.

@@ -15,13 +15,13 @@ enabled = false + apply  →  hard-delete that stack (wait until apply is green)
 enabled = true  + apply  →  create a new stack (same names, new IDs)
 ```
 
-HCP workspace **kong-ai-gateway-aws-workload** (branch **`develop`**):
+GitHub Action (branch **`develop`**):
 
-| Step | Variable `enabled` | Then |
+| Step | command | enabled |
 | --- | --- | --- |
-| Create | `true` | Start new run → Confirm & Apply |
-| Destroy | `false` | Start new run → Confirm & Apply |
-| Create again | `true` | Wait until destroy is green, then Start new run → Confirm & Apply |
+| Create | `apply` | **true** (checked) |
+| Destroy | `apply` | **false** (unchecked) |
+| Create again | `apply` | **true** |
 
 If you apply `true` while destroy is still running, AWS may reject the cluster name. Wait for the destroy apply to finish, then apply `true`.
 

@@ -13,7 +13,7 @@ Do not comment out or delete `.tf` files. Use the **`enabled`** switch, then **a
 | Layer | Resources |
 | --- | --- |
 | Network | 1 VPC `10.20.0.0/16`, 1 IGW, 1 public route table, **2 public subnets** (nodes in one AZ, EKS ENI in the second — AWS requires two) |
-| Compute | EKS cluster `kong-ai-dev` (v1.31), node group `demo`: **1 × t3.medium**, 20 GB gp3 (**one** public IPv4 on that node) |
+| Compute | EKS cluster `kong-ai-dev` (**v1.36**, standard support), node group `demo`: **1 × t3.medium**, 20 GB gp3 (**one** public IPv4 on that node) |
 | IAM | Cluster role, node role, policy attachments |
 | Launch template | EBS `delete_on_termination = true` |
 
@@ -29,7 +29,8 @@ Hours in a day = **24**. Days in a month ≈ **30**.
 
 | Meter | Rate | Source |
 | --- | --- | --- |
-| EKS cluster | **$0.10 / hour** | [EKS pricing](https://aws.amazon.com/eks/pricing/) |
+| EKS cluster (standard support, 1.36) | **$0.10 / hour** | [EKS pricing](https://aws.amazon.com/eks/pricing/) |
+| EKS extended support (do not use 1.31) | **+$0.50 / hour** | Would add **~$12/day** — not this apply |
 | `t3.small` | **$0.0208 / hour** | cheaper, 2 GB — may OOM |
 | `t3.medium` | **$0.0416 / hour** | **demo default** (4 GB) |
 | `t3.large` | **$0.0832 / hour** | oversized for this demo |
@@ -70,7 +71,7 @@ A **public IPv4** is an internet address (`3.x.x.x`) attached to a machine so it
 
 You cannot assign one public IPv4 to two EC2 nodes. Putting nodes in a private subnet avoids node IPv4 charges but needs a **NAT Gateway** (~$1.08/day), which is more expensive.
 
-### Worked example — current defaults (`enabled=true`, **1 × t3.medium**)
+### Worked example — current defaults (`enabled=true`, **EKS 1.36**, **1 × t3.medium**)
 
 | Line | Calculation | $/day |
 | --- | --- | --- |
@@ -125,16 +126,21 @@ Set **`enabled = false`** in **every place that would otherwise force it true**,
 
 | Where | What to turn **false** | Leave alone |
 | --- | --- | --- |
-| **HCP workspace** Variables (do this) | Terraform variable **`enabled`** → `false` | `TFC_AWS_PROVIDER_AUTH`, `TFC_AWS_RUN_ROLE_ARN`, `AWS_REGION`, `aws_region`, `budget_limit_usd`, `budget_alert_email` stay as they are |
+| **GitHub Action** (do this) | Input **`enabled`** → uncheck / `false` | Command = **`apply`** (not `plan`) |
+| **HCP workspace** Variables | Terraform variable **`enabled`** → `false` | `TFC_AWS_PROVIDER_AUTH`, `TFC_AWS_RUN_ROLE_ARN`, `AWS_REGION`, `aws_region`, `budget_limit_usd`, `budget_alert_email` stay as they are |
 | **Local `terraform.tfvars`** (if you use it) | `enabled = false` | — |
 
-### HCP UI (do this)
+### GitHub Action (do this)
 
-1. Workspace **kong-ai-gateway-aws-workload** → Variables → Terraform variable **`enabled`** = **false**
-2. **Actions → Start new run** (or wait for the next push under `aws/terraform/workloads`)
-3. Open the plan on the workspace → **Confirm & Apply**
+1. Actions → **Terraform workloads** → **Run workflow**
+2. Use workflow from **`develop`**
+3. **command** = `apply`
+4. **enabled** = **false**
+5. Run
 
-Set **`enabled`** back to **`true`** before the next create, or the next apply will stay empty.
+`TF_VAR_enabled` from the Action overrides the HCP default for that run.
+
+Set **`enabled`** back to **`true`** on the next create (check the box), or the next apply will stay empty.
 
 ---
 

@@ -13,7 +13,7 @@ Do not comment out or delete `.tf` files.
 | `true` (default) | Create / keep the demo stack |
 | `false` | **Hard-delete** the whole module (nodes, EBS volumes, cluster, VPC) |
 
-HCP: set workspace variable **`enabled`** = `false`, then **Start new run** → Confirm & Apply.
+GitHub Action: **Run workflow** → **apply** → uncheck **enabled**.
 
 See [DESTROY.md](DESTROY.md) for the full create list, daily cost, and which switches to set **false**.  
 See [RECREATE.md](RECREATE.md) for destroy → create again (no soft delete).

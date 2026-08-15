@@ -1,6 +1,6 @@
 # Workloads workspace (`kong-ai-gateway-aws-workload`)
 
-HCP workflow: **Version control**. Terraform root is **`dev/`**.
+HCP workflow: **CLI-Driven**. Terraform root is **`dev/`**.
 
 | Path | Role |
 | --- | --- |
@@ -8,4 +8,4 @@ HCP workflow: **Version control**. Terraform root is **`dev/`**.
 | `dev/` | Terraform: VPC, subnet, EKS |
 | `prod/` | Empty |
 
-Plans show on HCP workspace **kong-ai-gateway-aws-workload**. Confirm & Apply there. Branch **`develop`**, working directory `aws/terraform/workloads/dev`.
+GitHub Action: **Actions → Terraform workloads → Run workflow** (branch **`develop`**). Working directory `aws/terraform/workloads/dev`.

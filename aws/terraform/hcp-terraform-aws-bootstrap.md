@@ -165,23 +165,20 @@ Confirm the copy. Terraform uploads the local state into workspace `kong-ai-gate
 
 ## Choose your workflow (HCP workspace settings)
 
-When HCP asks **Choose your workflow**, pick **Version control** for both workspaces. Same GitHub repo and branch; different working directories so they do not steal each other's runs.
+When HCP asks **Choose your workflow**, pick by workspace. Do not copy bootstrap VCS onto workloads.
 
-| Workspace | Choose | Working directory | Trigger prefixes |
-| --- | --- | --- | --- |
-| `kong-ai-gateway-aws-bootstrap` | **Version control workflow** | `aws/terraform/bootstrap` | `aws/terraform/bootstrap` |
-| `kong-ai-gateway-aws-workload` | **Version control workflow** | `aws/terraform/workloads/dev` | `aws/terraform/workloads` |
+| Workspace | Choose | GitHub repo / branch in HCP? |
+| --- | --- | --- |
+| `kong-ai-gateway-aws-bootstrap` | **Version control workflow** | Yes. Connect GitHub, branch `develop`, path `aws/terraform/bootstrap`. |
+| `kong-ai-gateway-aws-workload` | **CLI-Driven Workflow** | **No.** Plan/apply from GitHub Action only. |
 
-### Shared VCS settings
+### Workloads — CLI-driven (GitHub Action)
 
-HCP clones GitHub and posts a **plan on the workspace** when matching files change. Confirm & Apply in HCP (auto-apply off).
-
-- Provider: GitHub
-- Repository: `UttamGiri/kong-ai-gateway`
-- VCS branch: `develop`
-- Auto-apply: off (plan, then Confirm)
-
-CLI-driven workspaces do not show those VCS plans. Do not switch workloads back to CLI.
+- Workflow: `.github/workflows/terraform-workloads.yml`
+- Trigger: **Run workflow** (`workflow_dispatch`), not a git push
+- Working directory: `aws/terraform/workloads/dev`
+- Repo secret: `TF_API_TOKEN`
+- Inputs: **command** plan|apply, **enabled** true|false. Worker is always `t3.medium`.
 
 ---
 
