@@ -23,7 +23,7 @@ flowchart LR
     end
 
     subgraph hub ["Docker Hub"]
-        IMG["uttamgiri32/kong-ai-gateway:0.1.0<br/>then 0.1.1, 0.1.2, ..."]
+        IMG["uttamgiri32/kong-ai-gateway<br/>0.1.1, 0.1.2, 0.1.3, ..."]
     end
 
     subgraph cluster ["EKS"]
@@ -69,7 +69,7 @@ docker info | grep Username
 
 ## 1b. Do you need to create a repository on Docker Hub?
 
-**For a personal account: no, not required.** The first `docker push` of `uttamgiri32/kong-ai-gateway:0.1.0` **creates** the repo under your user. The Action does that.
+**For a personal account: no, not required.** The first `docker push` of `uttamgiri32/kong-ai-gateway:0.1.1` **creates** the repo under your user. The Action does that.
 
 You **cannot** push to a name that is not yours. The image must be `DOCKERHUB_USERNAME/kong-ai-gateway`, not `someone-else/kong-ai-gateway`.
 
@@ -115,16 +115,13 @@ GitHub secret `DOCKERHUB_USERNAME` must be **`uttamgiri32`**. Helm already uses 
 2. **Docker publish Kong AI Gateway**
 3. **Run workflow**
 4. Use workflow from **`develop`**
-5. Tag: **`auto`** (default) — or type a version like `0.2.0`
-6. Run
+5. Run (no tag field)
 
 What the job does:
 
 1. Checkout `aws/kong`
-2. `docker login` to Docker Hub
-3. Pick a version:
-   - **`auto`** — use `values.yaml` `image.tag` (`0.1.0`). If that tag already exists on Hub, bump patch (`0.1.1`, `0.1.2`, …)
-   - **typed** — use that version (for a minor/major bump)
+2. Read `image.tag` from `values.yaml` and add **1** to the patch (`0.1.0` → `0.1.1` → `0.1.2`)
+3. `docker login` to Docker Hub
 4. `docker build` (`FROM kong:3.9`, `COPY` plugin + `kong.yml`)
 5. `docker push`
    - `docker.io/uttamgiri32/kong-ai-gateway:<version>`
@@ -141,12 +138,12 @@ Watch the job log for `pushing` / `digest` and `chore: kong-ai-gateway image tag
 
 https://hub.docker.com/r/uttamgiri32/kong-ai-gateway/tags
 
-You should see the semver tag (`0.1.0`, then `0.1.1`, …) and the commit SHA.
+You should see the semver tag (`0.1.1`, then `0.1.2`, …) and the commit SHA.
 
 **CLI (after `docker login`)**
 
 ```bash
-docker pull docker.io/uttamgiri32/kong-ai-gateway:0.1.0
+docker pull docker.io/uttamgiri32/kong-ai-gateway:0.1.1
 docker images | grep kong-ai-gateway
 ```
 
@@ -156,7 +153,7 @@ There is **no** image in AWS ECR or in the EKS console. AWS only sees the image 
 
 ## 5. Helm + Argo CD (after the image exists)
 
-Helm does not build. It only names the image:
+Helm does not build. It only names the image. Starting seed is `0.1.0`; the Action writes the next patch on each run:
 
 ```yaml
 # aws/helm/kong-ai-gateway/values.yaml

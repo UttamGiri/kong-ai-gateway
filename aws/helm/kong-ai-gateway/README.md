@@ -5,7 +5,7 @@ Deploys into namespace `kong-ai-gateway` (created by `aws/helm/namespace`). Imag
 **Deploy order**
 
 1. Repo secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`
-2. Actions → **Docker publish Kong AI Gateway** → tag **`auto`** (workflow from `develop`). The job pushes the image and commits `values.yaml` `image.tag`.
+2. Actions → **Docker publish Kong AI Gateway** → Run workflow from `develop`. No tag to type: the job increments `image.tag` by 1 and commits it.
 3. Helm image is `docker.io/uttamgiri32/kong-ai-gateway` (Docker Hub user **uttamgiri32**). Secret `DOCKERHUB_USERNAME` must be the same.
 4. `./aws/argocd/install.sh` — Argo CD syncs this chart
 
