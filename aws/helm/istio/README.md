@@ -21,6 +21,16 @@ kubectl -n istio-ingress get svc istio-ingressgateway
 curl -sS -D - http://<NLB_HOSTNAME>/get
 ```
 
+Kong Manager (needs Admin API on the same host):
+
+http://\<NLB_HOSTNAME\>:8002
+
+| Port on NLB | Where it goes |
+| --- | --- |
+| 80 | Kong proxy |
+| 8002 | Kong Manager UI |
+| 8001 | Admin API (Manager uses this; open to the internet) |
+
 | Install | Namespace | Role |
 | --- | --- | --- |
 | `istio-base` + `istiod` | `istio-system` | Mesh control plane |

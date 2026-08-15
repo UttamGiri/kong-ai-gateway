@@ -34,3 +34,11 @@ service:
       port: 443
       protocol: TCP
       targetPort: 443
+    - name: admin
+      port: 8001
+      protocol: TCP
+      targetPort: 8001
+    - name: manager
+      port: 8002
+      protocol: TCP
+      targetPort: 8002

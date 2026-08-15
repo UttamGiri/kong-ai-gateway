@@ -23,10 +23,12 @@ spec:
           env:
             - name: KONG_ADMIN_GUI_LISTEN
               value: "0.0.0.0:{{ .Values.service.managerPort }}"
+            {{- if .Values.istio.publicHost }}
             - name: KONG_ADMIN_GUI_URL
-              value: "http://localhost:{{ .Values.service.managerPort }}"
+              value: "http://{{ .Values.istio.publicHost }}:{{ .Values.service.managerPort }}"
             - name: KONG_ADMIN_GUI_API_URL
-              value: "http://localhost:{{ .Values.service.adminPort }}"
+              value: "http://{{ .Values.istio.publicHost }}:{{ .Values.service.adminPort }}"
+            {{- end }}
             - name: KONG_NGINX_WORKER_PROCESSES
               value: "1"
           ports:

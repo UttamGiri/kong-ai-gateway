@@ -15,4 +15,16 @@ spec:
         protocol: HTTP
       hosts:
         {{- toYaml .Values.istio.gateway.hosts | nindent 8 }}
+    - port:
+        number: {{ .Values.service.adminPort }}
+        name: admin
+        protocol: HTTP
+      hosts:
+        {{- toYaml .Values.istio.gateway.hosts | nindent 8 }}
+    - port:
+        number: {{ .Values.service.managerPort }}
+        name: manager
+        protocol: HTTP
+      hosts:
+        {{- toYaml .Values.istio.gateway.hosts | nindent 8 }}
 {{- end }}
