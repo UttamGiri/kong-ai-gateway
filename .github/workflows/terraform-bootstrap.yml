@@ -1,0 +1,47 @@
+# CLI-driven HCP Terraform run. This workspace is not VCS-connected, so a
+# push to develop does not start a plan. Run this workflow from the Actions tab.
+name: Terraform bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Apply the plan to AWS (unchecked = plan only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  TF_CLOUD_ORGANIZATION: vaflt-org
+  TF_WORKSPACE: kong-ai-gateway-aws-bootstrap
+  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+
+jobs:
+  terraform:
+    name: HCP Terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aws/terraform/bootstrap
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+          terraform_wrapper: false
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform plan
+        run: terraform plan -input=false -no-color
+
+      - name: Terraform apply
+        if: ${{ inputs.apply }}
+        run: terraform apply -input=false -auto-approve -no-color
