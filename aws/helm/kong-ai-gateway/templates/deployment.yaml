@@ -20,11 +20,20 @@ spec:
         - name: gateway
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: KONG_ADMIN_GUI_LISTEN
+              value: "0.0.0.0:{{ .Values.service.managerPort }}"
+            - name: KONG_ADMIN_GUI_URL
+              value: "http://localhost:{{ .Values.service.managerPort }}"
+            - name: KONG_ADMIN_GUI_API_URL
+              value: "http://localhost:{{ .Values.service.adminPort }}"
           ports:
             - name: http
               containerPort: {{ .Values.service.targetPort }}
             - name: admin
               containerPort: {{ .Values.service.adminPort }}
+            - name: manager
+              containerPort: {{ .Values.service.managerPort }}
           livenessProbe:
             httpGet:
               path: /status

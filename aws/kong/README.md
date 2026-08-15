@@ -1,6 +1,8 @@
 # Kong AI Gateway image (OSS + custom plugin)
 
-**Free base:** Docker Hub `kong:3.9` (Kong Gateway OSS). Not Enterprise.
+**Free base:** Docker Hub `kong:3.9` (Kong Gateway OSS). Not Enterprise. Not Kong Konnect.
+
+Kong Manager GUI listens on **8002** (read-only in DB-less). Proxy **8000**, Admin API **8001**.
 
 The plugin is **not** inside the Helm chart. It lives in `plugins/custom-header/`. The Dockerfile copies it into the image.
 

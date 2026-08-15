@@ -14,10 +14,11 @@ ENV KONG_DATABASE=off \
     KONG_PLUGINS=bundled,custom-header \
     KONG_PROXY_LISTEN=0.0.0.0:8000 \
     KONG_ADMIN_LISTEN=0.0.0.0:8001 \
+    KONG_ADMIN_GUI_LISTEN=0.0.0.0:8002 \
     KONG_PROXY_ACCESS_LOG=/dev/stdout \
     KONG_ADMIN_ACCESS_LOG=/dev/stdout \
     KONG_PROXY_ERROR_LOG=/dev/stderr \
     KONG_ADMIN_ERROR_LOG=/dev/stderr \
     KONG_LUA_PACKAGE_PATH=/usr/local/share/lua/5.1/?.lua;;
 
-EXPOSE 8000 8001
+EXPOSE 8000 8001 8002

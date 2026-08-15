@@ -10,6 +10,7 @@ service:
   port: 8000
   targetPort: 8000
   adminPort: 8001
+  managerPort: 8002
 
 istio:
   enabled: false

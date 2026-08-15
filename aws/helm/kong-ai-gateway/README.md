@@ -11,6 +11,14 @@ Deploys into namespace `kong-ai-gateway` (created by `aws/helm/namespace`). Imag
 
 Istio is **off** (`istio.enabled: false`) until an Istio install exists. Service is ClusterIP (no NLB).
 
+Kong Manager (OSS GUI) is not on the public internet. From this PC:
+
+```bash
+kubectl -n kong-ai-gateway port-forward svc/kong-ai-gateway 8001:8001 8002:8002
+```
+
+Open **http://localhost:8002**. Admin API is **http://localhost:8001**. DB-less mode is read-only in the UI.
+
 | Path | What |
 | --- | --- |
 | `templates/deployment.yaml` | Pods |
