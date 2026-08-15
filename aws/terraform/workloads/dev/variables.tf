@@ -4,6 +4,18 @@ variable "enabled" {
   default     = true
 }
 
+variable "aws_region" {
+  type        = string
+  description = "AWS region for the workload stack."
+  default     = "us-east-2"
+}
+
+variable "aws_profile" {
+  type        = string
+  description = "Named AWS CLI profile for local apply only. Leave empty on HCP (OIDC)."
+  default     = ""
+}
+
 variable "cluster_name" {
   type        = string
   description = "EKS cluster name."
@@ -17,7 +29,7 @@ variable "vpc_cidr" {
 
 variable "node_instance_type" {
   type        = string
-  description = "Worker size. Demo default t3.medium (4 GB). t3.small (2 GB) is cheaper but may OOM."
+  description = "Worker size. Demo default t3.medium (4 GB)."
   default     = "t3.medium"
 }
 
