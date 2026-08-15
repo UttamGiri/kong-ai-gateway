@@ -65,6 +65,26 @@ docker info | grep Username
 
 ---
 
+## 1b. Do you need to create a repository on Docker Hub?
+
+**For a personal account: no, not required.** The first `docker push` of `YOURUSER/kong-ai-gateway:latest` **creates** the repo under your user. The Action does that.
+
+You **cannot** push to a name that is not yours. The image must be `DOCKERHUB_USERNAME/kong-ai-gateway`, not `someone-else/kong-ai-gateway`.
+
+**Optional — create it empty in the UI first** (same result, easier to see before the first run):
+
+1. https://hub.docker.com → **Create repository**
+2. Name: **`kong-ai-gateway`** (must match the Action tag)
+3. Visibility: **Public** (free) or Private (Hub plan)
+4. Create
+
+You should then see: `https://hub.docker.com/r/<YOURUSER>/kong-ai-gateway`  
+Tags stay empty until the GitHub Action push succeeds.
+
+This is **Docker Hub**, not GitHub Packages and not AWS ECR. Do not create an ECR repository for this pipeline.
+
+---
+
 ## 2. GitHub secrets (so the Action can log in)
 
 Repo **Settings → Secrets and variables → Actions → New repository secret**:
