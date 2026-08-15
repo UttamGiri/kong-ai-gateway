@@ -277,7 +277,7 @@ Credentials on this path: **yours**. Terraform AWS provider uses the default cha
 
 ## 4. After bootstrap — HCP Terraform talks to AWS via OIDC
 
-A later `terraform apply` for `aws/terraform/workloads` is CLI-driven: Cursor uploads config; **HCP Terraform executes** the plan/apply. The AWS provider inside that run has no access key. HCP Terraform mints an OIDC token and AWS STS exchanges it for one-hour creds.
+A later apply for `aws/terraform/workloads` is **Version control**: GitHub push plans on the HCP workspace; you Confirm & Apply there. **HCP Terraform executes** the run. The AWS provider inside that run has no access key. HCP Terraform mints an OIDC token and AWS STS exchanges it for one-hour creds.
 
 ```mermaid
 sequenceDiagram
@@ -289,7 +289,7 @@ sequenceDiagram
     participant Role as IAM role<br/>hcp-terraform-run
     participant API as AWS APIs
 
-    You->>TFC: terraform apply (CLI-driven)
+    You->>TFC: Confirm and Apply (VCS plan)
     TFC->>TFC: Read TFC_AWS_PROVIDER_AUTH=true
     TFC->>TFC: Read TFC_AWS_RUN_ROLE_ARN
     TFC->>TFC: Mint OIDC token<br/>iss=https://app.terraform.io<br/>aud=aws.workload.identity<br/>sub=organization:ORG:project:kong-ai-gateway:workspace:kong-ai-gateway-aws:run_phase:plan
@@ -339,7 +339,7 @@ If `tfc_organization_name` in tfvars does not match the real HCP org, later remo
 flowchart TB
     subgraph cursor [Cursor IDE]
         Apply1["1. terraform apply bootstrap<br/>runs here"]
-        Apply2["2. terraform apply workloads<br/>CLI-driven trigger only"]
+        Apply2["2. Confirm and Apply workloads<br/>VCS plan on the workspace"]
     end
 
     subgraph hcp [app.terraform.io]

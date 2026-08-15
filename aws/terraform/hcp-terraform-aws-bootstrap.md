@@ -58,7 +58,7 @@ Not selected:
 | IAM role on EC2/ECS/Lambda | Nothing is running inside AWS yet. |
 | IAM Roles Anywhere | For servers/certs off AWS, not an IDE. |
 
-Deploy flow from this IDE: you run Terraform in the Cursor terminal. Bootstrap uses your SSO session. Workload `terraform apply` is CLI-driven into HCP Terraform; HCP Terraform then assumes `hcp-terraform-run` over OIDC.
+Deploy flow: bootstrap first apply can run in the Cursor terminal (SSO). After that, both workspaces are **Version control** — a push to `develop` plans in HCP; Confirm & Apply there. HCP assumes `hcp-terraform-run` over OIDC.
 
 ```mermaid
 flowchart LR
@@ -77,7 +77,7 @@ flowchart LR
 
     Term -->|"bootstrap apply"| SSO
     SSO -->|"short-lived creds"| AWS1["AWS IAM APIs"]
-    Term -->|"workloads apply<br/>CLI-driven"| TFC
+    Term -->|"workloads VCS plan<br/>Confirm and Apply"| TFC
     TFC -->|"OIDC token"| Role
     Role -->|"STS creds"| AWS2["AWS workload APIs"]
 ```
@@ -165,36 +165,23 @@ Confirm the copy. Terraform uploads the local state into workspace `kong-ai-gate
 
 ## Choose your workflow (HCP workspace settings)
 
-When HCP asks **Choose your workflow**, pick by workspace. These are different workspaces. Do not copy bootstrap VCS settings onto workloads.
+When HCP asks **Choose your workflow**, pick **Version control** for both workspaces. Same GitHub repo and branch; different working directories so they do not steal each other's runs.
 
-| Workspace | Choose | GitHub repo / branch in HCP? |
-| --- | --- | --- |
-| `kong-ai-gateway-aws-bootstrap` | **Version control workflow** | Yes. Connect GitHub, set branch and path. |
-| `kong-ai-gateway-aws-workload` | **CLI-Driven Workflow** | **No.** Do not connect a repo, do not pick a branch. |
+| Workspace | Choose | Working directory | Trigger prefixes |
+| --- | --- | --- | --- |
+| `kong-ai-gateway-aws-bootstrap` | **Version control workflow** | `aws/terraform/bootstrap` | `aws/terraform/bootstrap` |
+| `kong-ai-gateway-aws-workload` | **Version control workflow** | `aws/terraform/workloads/dev` | `aws/terraform/workloads` |
 
-### Bootstrap — Version control
+### Shared VCS settings
 
-HCP clones GitHub itself and auto-plans when matching files change.
+HCP clones GitHub and posts a **plan on the workspace** when matching files change. Confirm & Apply in HCP (auto-apply off).
 
 - Provider: GitHub
 - Repository: `UttamGiri/kong-ai-gateway`
 - VCS branch: `develop`
-- Terraform working directory: `aws/terraform/bootstrap`
-- Triggers: prefixes `aws/terraform/bootstrap` (not Patterns `**`)
 - Auto-apply: off (plan, then Confirm)
 
-### Workloads — CLI-driven (GitHub Action)
-
-HCP is **not** linked to GitHub. There is no repository picker, no branch, no working-directory trigger on that workspace.
-
-The GitHub connection lives in **Actions**, not in HCP Version Control:
-
-- Workflow: `.github/workflows/terraform-workloads.yml`
-- Trigger: **Run workflow** (`workflow_dispatch`), not a git push
-- The Action runs `terraform` against workspace `kong-ai-gateway-aws-workload`
-- Repo secret: `TF_API_TOKEN`
-
-If you connect GitHub on the workloads workspace anyway, a push will start HCP runs and GitHub Actions cannot be the only trigger.
+CLI-driven workspaces do not show those VCS plans. Do not switch workloads back to CLI.
 
 ---
 

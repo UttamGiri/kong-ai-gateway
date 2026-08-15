@@ -125,25 +125,16 @@ Set **`enabled = false`** in **every place that would otherwise force it true**,
 
 | Where | What to turn **false** | Leave alone |
 | --- | --- | --- |
-| **GitHub Action** (preferred) | Input **`enabled`** → uncheck / `false` | Command = **`apply`** (not `plan`) |
-| **HCP workspace** Variables | Terraform variable **`enabled`** → `false` | `TFC_AWS_PROVIDER_AUTH`, `TFC_AWS_RUN_ROLE_ARN`, `AWS_REGION`, `aws_region`, `budget_limit_usd`, `budget_alert_email` stay as they are |
+| **HCP workspace** Variables (do this) | Terraform variable **`enabled`** → `false` | `TFC_AWS_PROVIDER_AUTH`, `TFC_AWS_RUN_ROLE_ARN`, `AWS_REGION`, `aws_region`, `budget_limit_usd`, `budget_alert_email` stay as they are |
 | **Local `terraform.tfvars`** (if you use it) | `enabled = false` | — |
 
-### GitHub Action (do this)
+### HCP UI (do this)
 
-1. Actions → **Terraform workloads** → **Run workflow**
-2. Branch: **`develop`**
-3. **command** = `apply`
-4. **enabled** = **false**
-5. Run
+1. Workspace **kong-ai-gateway-aws-workload** → Variables → Terraform variable **`enabled`** = **false**
+2. **Actions → Start new run** (or wait for the next push under `aws/terraform/workloads`)
+3. Open the plan on the workspace → **Confirm & Apply**
 
-`TF_VAR_enabled` from the Action overrides the HCP default for that run.
-
-### HCP UI apply (if you apply in Terraform Cloud)
-
-Variables → Terraform variables → **`enabled`** = **false** → queue **apply**.
-
-Set it back to **`true`** before the next create, or the next apply will stay empty.
+Set **`enabled`** back to **`true`** before the next create, or the next apply will stay empty.
 
 ---
 

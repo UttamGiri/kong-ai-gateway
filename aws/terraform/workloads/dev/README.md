@@ -13,14 +13,12 @@ Do not comment out or delete `.tf` files.
 | `true` (default) | Create / keep the demo stack |
 | `false` | **Hard-delete** the whole module (nodes, EBS volumes, cluster, VPC) |
 
-GitHub Action: **Run workflow** → **apply** → uncheck **enabled**.
-
-Or set HCP / `terraform.tfvars`: `enabled = false` then apply.
+HCP: set workspace variable **`enabled`** = `false`, then **Start new run** → Confirm & Apply.
 
 See [DESTROY.md](DESTROY.md) for the full create list, daily cost, and which switches to set **false**.  
 See [RECREATE.md](RECREATE.md) for destroy → create again (no soft delete).
 
-Default worker: **1 × t3.medium** (one public IPv4).
+Default worker: **1 × t3.medium** (one public IPv4). Set `node_instance_type` on the HCP workspace if you need to change it.
 
 ## $20 / month billing alert
 
