@@ -27,6 +27,8 @@ spec:
               value: "http://localhost:{{ .Values.service.managerPort }}"
             - name: KONG_ADMIN_GUI_API_URL
               value: "http://localhost:{{ .Values.service.adminPort }}"
+            - name: KONG_NGINX_WORKER_PROCESSES
+              value: "1"
           ports:
             - name: http
               containerPort: {{ .Values.service.targetPort }}
@@ -38,17 +40,17 @@ spec:
             httpGet:
               path: /status
               port: admin
-            initialDelaySeconds: 15
+            initialDelaySeconds: 30
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /status
               port: admin
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
             limits:
-              memory: 512Mi
+              memory: {{ .Values.resources.limits.memory }}
