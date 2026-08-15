@@ -1,6 +1,6 @@
-# CLI-driven HCP Terraform run. This workspace is not VCS-connected, so a
-# push to develop does not start a plan. Run this workflow from the Actions tab.
-name: Terraform bootstrap
+# CLI-driven HCP Terraform for workloads. This workspace is not VCS-connected.
+# A push to develop does not start a plan. Run this workflow from the Actions tab.
+name: Terraform workloads
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ permissions:
 
 env:
   TF_CLOUD_ORGANIZATION: vaflt-org
-  TF_WORKSPACE: kong-ai-gateway-aws-bootstrap
+  TF_WORKSPACE: kong-ai-gateway-aws
   TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: aws/terraform/bootstrap
+        working-directory: aws/terraform/workloads
     steps:
       - name: Checkout
         uses: actions/checkout@v4
