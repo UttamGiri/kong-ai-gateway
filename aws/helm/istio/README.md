@@ -36,4 +36,15 @@ http://\<NLB_HOSTNAME\>:8002
 | `istio-base` + `istiod` | `istio-system` | Mesh control plane |
 | `istio-ingressgateway` | `istio-ingress` | Front door pods; **NLB** on port 80 |
 
-Kong chart Gateway selector is `istio: ingressgateway` — it binds to these pods. VirtualService sends that HTTP to Service `kong-ai-gateway:8000`. Admin 8001 / Manager 8002 stay ClusterIP only.
+Kong chart Gateway selector is `istio: ingressgateway` — it binds to these pods.
+
+## Uninstall
+
+There is **no** custom NLB chart. The NLB is the `LoadBalancer` Service inside the official `istio/gateway` release.
+
+```bash
+./aws/helm/istio/uninstall.sh          # drops ingress + NLB (~$0.66/day stops)
+./aws/helm/istio/uninstall.sh --all    # also istiod / CRDs / namespaces
+```
+
+Then set `istio.enabled: false` in `aws/helm/kong-ai-gateway/values.yaml` and push so Argo deletes Kong’s Gateway/VS. Kong and Argo CD **pods stay**; they just lose the public URL.
