@@ -4,7 +4,7 @@ output "oidc_provider_arn" {
 }
 
 output "tfc_run_role_arn" {
-  description = "IAM role HCP Terraform will assume. Set this as TFC_AWS_RUN_ROLE_ARN later."
+  description = "IAM role HCP Terraform assumes via OIDC. Set this as TFC_AWS_RUN_ROLE_ARN on the workspace."
   value       = aws_iam_role.tfc_run.arn
 }
 
