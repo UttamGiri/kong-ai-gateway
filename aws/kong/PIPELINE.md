@@ -18,11 +18,12 @@ flowchart LR
         LOGIN["docker login<br/>DOCKERHUB_USERNAME + TOKEN"]
         BUILD["docker build aws/kong"]
         PUSH["docker push"]
-        LOGIN --> BUILD --> PUSH
+        VAL["commit values.yaml image.tag"]
+        LOGIN --> BUILD --> PUSH --> VAL
     end
 
     subgraph hub ["Docker Hub"]
-        IMG["USER/kong-ai-gateway:latest<br/>USER/kong-ai-gateway:git-sha"]
+        IMG["uttamgiri32/kong-ai-gateway:0.1.0<br/>then 0.1.1, 0.1.2, ..."]
     end
 
     subgraph cluster ["EKS"]
@@ -34,6 +35,7 @@ flowchart LR
 
     PLUG --> BUILD
     PUSH --> IMG
+    VAL -->|"git develop"| HELM
     IMG -->|"image pull"| POD
 ```
 
@@ -67,7 +69,7 @@ docker info | grep Username
 
 ## 1b. Do you need to create a repository on Docker Hub?
 
-**For a personal account: no, not required.** The first `docker push` of `YOURUSER/kong-ai-gateway:latest` **creates** the repo under your user. The Action does that.
+**For a personal account: no, not required.** The first `docker push` of `uttamgiri32/kong-ai-gateway:0.1.0` **creates** the repo under your user. The Action does that.
 
 You **cannot** push to a name that is not yours. The image must be `DOCKERHUB_USERNAME/kong-ai-gateway`, not `someone-else/kong-ai-gateway`.
 
@@ -113,19 +115,23 @@ GitHub secret `DOCKERHUB_USERNAME` must be **`uttamgiri32`**. Helm already uses 
 2. **Docker publish Kong AI Gateway**
 3. **Run workflow**
 4. Use workflow from **`develop`**
-5. Tag: `latest` (SHA is always tagged too)
+5. Tag: **`auto`** (default) — or type a version like `0.2.0`
 6. Run
 
 What the job does:
 
 1. Checkout `aws/kong`
 2. `docker login` to Docker Hub
-3. `docker build` (`FROM kong:3.9`, `COPY` plugin + `kong.yml`)
-4. `docker push`
-   - `docker.io/<DOCKERHUB_USERNAME>/kong-ai-gateway:latest`
-   - `docker.io/<DOCKERHUB_USERNAME>/kong-ai-gateway:<git-sha>`
+3. Pick a version:
+   - **`auto`** — use `values.yaml` `image.tag` (`0.1.0`). If that tag already exists on Hub, bump patch (`0.1.1`, `0.1.2`, …)
+   - **typed** — use that version (for a minor/major bump)
+4. `docker build` (`FROM kong:3.9`, `COPY` plugin + `kong.yml`)
+5. `docker push`
+   - `docker.io/uttamgiri32/kong-ai-gateway:<version>`
+   - `docker.io/uttamgiri32/kong-ai-gateway:<git-sha>`
+6. Write that version into `aws/helm/kong-ai-gateway/values.yaml` `image.tag` and **commit + push** to the same branch so Argo CD deploys it
 
-Watch the job log for `pushing` / `digest`.
+Watch the job log for `pushing` / `digest` and `chore: kong-ai-gateway image tag`.
 
 ---
 
@@ -135,12 +141,12 @@ Watch the job log for `pushing` / `digest`.
 
 https://hub.docker.com/r/uttamgiri32/kong-ai-gateway/tags
 
-You should see tags `latest` and the commit SHA.
+You should see the semver tag (`0.1.0`, then `0.1.1`, …) and the commit SHA.
 
 **CLI (after `docker login`)**
 
 ```bash
-docker pull docker.io/uttamgiri32/kong-ai-gateway:latest
+docker pull docker.io/uttamgiri32/kong-ai-gateway:0.1.0
 docker images | grep kong-ai-gateway
 ```
 
@@ -156,8 +162,8 @@ Helm does not build. It only names the image:
 # aws/helm/kong-ai-gateway/values.yaml
 image:
   repository: docker.io/uttamgiri32/kong-ai-gateway
-  tag: latest
-  pullPolicy: Always
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
 ```
 
 Register the app with Argo CD (namespace `kong-ai-gateway` and Argo CD must already exist):

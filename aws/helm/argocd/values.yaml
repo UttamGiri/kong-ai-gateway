@@ -1,0 +1,41 @@
+# Minimal Argo CD. Official chart argo/argo-cd --version 10.1.4
+# Extra AWS cost: $0 if these pods fit on the existing t3.medium (no NLB).
+# Customize later by turning flags on — do not copy the upstream chart.
+
+crds:
+  install: true
+
+configs:
+  params:
+    server.insecure: true
+
+# Core — required
+controller:
+  replicas: 1
+repoServer:
+  replicas: 1
+server:
+  replicas: 1
+  ingress:
+    enabled: false
+  service:
+    type: ClusterIP
+
+# Redis is required. Argo CD will not sync without it.
+# Keep one small in-cluster Redis. Do not enable redis-ha (3 extra pods).
+redis:
+  enabled: true
+redis-ha:
+  enabled: false
+
+# Dex = SSO (GitHub/Google login). Not needed for admin + port-forward.
+dex:
+  enabled: false
+
+# ApplicationSet = many Apps from a template. Not needed for one Kong chart.
+applicationSet:
+  enabled: false
+
+# Slack/email alerts from Argo. Not needed for the demo.
+notifications:
+  enabled: false
