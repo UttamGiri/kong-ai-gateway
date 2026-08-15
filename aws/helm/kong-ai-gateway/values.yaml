@@ -1,5 +1,5 @@
 image:
-  repository: docker.io/uttamgiri/kong-ai-gateway
+  repository: docker.io/uttamgiri32/kong-ai-gateway
   tag: latest
   pullPolicy: Always
 

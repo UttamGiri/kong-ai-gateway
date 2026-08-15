@@ -8,4 +8,4 @@ Applies [kong-ai-gateway.yaml](kong-ai-gateway.yaml): Argo CD syncs Helm chart `
 2. Namespaces + Argo CD already installed
 3. `./aws/argocd/install.sh`
 
-Repo is public; Argo CD can git pull without a credential. Helm `image.repository` must match `DOCKERHUB_USERNAME` (default `docker.io/uttamgiri/kong-ai-gateway`).
+Repo is public; Argo CD can git pull without a credential. Helm `image.repository` must match `DOCKERHUB_USERNAME` (default `docker.io/uttamgiri32/kong-ai-gateway`).

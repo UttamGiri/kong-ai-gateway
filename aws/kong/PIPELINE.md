@@ -53,7 +53,7 @@ You need a [Docker Hub](https://hub.docker.com) account. GitHub login is not Doc
 
 ```bash
 docker login
-# Username: your Docker Hub username (example: uttamgiri)
+# Username: uttamgiri32
 # Password: the access token
 ```
 
@@ -103,9 +103,7 @@ password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 Public people **cannot** run this workflow on your repo (needs write access). They also cannot read these secrets.
 
-If `DOCKERHUB_USERNAME` is not `uttamgiri`, change Helm:
-
-`aws/helm/kong-ai-gateway/values.yaml` → `image.repository: docker.io/<your-user>/kong-ai-gateway`
+GitHub secret `DOCKERHUB_USERNAME` must be **`uttamgiri32`**. Helm already uses `docker.io/uttamgiri32/kong-ai-gateway`.
 
 ---
 
@@ -135,21 +133,16 @@ Watch the job log for `pushing` / `digest`.
 
 **Docker Hub website**
 
-https://hub.docker.com/r/`<DOCKERHUB_USERNAME>`/kong-ai-gateway/tags
-
-Example if user is `uttamgiri`:  
-https://hub.docker.com/r/uttamgiri/kong-ai-gateway/tags
+https://hub.docker.com/r/uttamgiri32/kong-ai-gateway/tags
 
 You should see tags `latest` and the commit SHA.
 
 **CLI (after `docker login`)**
 
 ```bash
-docker pull docker.io/uttamgiri/kong-ai-gateway:latest
+docker pull docker.io/uttamgiri32/kong-ai-gateway:latest
 docker images | grep kong-ai-gateway
 ```
-
-Replace `uttamgiri` with your Hub username.
 
 There is **no** image in AWS ECR or in the EKS console. AWS only sees the image after a **node pulls** it for a pod.
 
@@ -162,7 +155,7 @@ Helm does not build. It only names the image:
 ```yaml
 # aws/helm/kong-ai-gateway/values.yaml
 image:
-  repository: docker.io/uttamgiri/kong-ai-gateway
+  repository: docker.io/uttamgiri32/kong-ai-gateway
   tag: latest
   pullPolicy: Always
 ```
