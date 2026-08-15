@@ -1,7 +1,7 @@
 image:
-  repository: docker.io/REPLACE_ME/kong-ai-gateway
+  repository: docker.io/uttamgiri/kong-ai-gateway
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 replicaCount: 1
 
@@ -9,9 +9,10 @@ service:
   type: ClusterIP
   port: 8000
   targetPort: 8000
+  adminPort: 8001
 
 istio:
-  enabled: true
+  enabled: false
   gateway:
     selector:
       istio: ingressgateway

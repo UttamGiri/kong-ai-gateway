@@ -1,0 +1,42 @@
+# CLI-driven: build Kong OSS + plugin image and push to Docker Hub (not ECR).
+# Actions → Docker publish Kong AI Gateway → Run workflow from develop.
+# Secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+name: Docker publish Kong AI Gateway
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag (also always tagged with git SHA)
+        required: true
+        default: latest
+
+permissions:
+  contents: read
+
+jobs:
+  build-push:
+    name: build / push ${{ inputs.tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: aws/kong
+          file: aws/kong/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/kong-ai-gateway:${{ inputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/kong-ai-gateway:${{ github.sha }}

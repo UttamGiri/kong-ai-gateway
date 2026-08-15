@@ -1,0 +1,16 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: mock
+    url: https://httpbin.org
+    routes:
+      - name: mock-route
+        paths:
+          - /
+
+plugins:
+  - name: custom-header
+    config:
+      header_name: X-Kong-AI-Gateway
+      header_value: oss
