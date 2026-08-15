@@ -10,6 +10,7 @@ configs:
     server.insecure: true
   cm:
     url: http://ad03799c62bed4c97bb86fa9e9620e21-4fe42c6b263ea65a.elb.us-east-2.amazonaws.com:8080
+    timeout.reconciliation: 60s
 
 # Core — required
 controller:

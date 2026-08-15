@@ -66,7 +66,7 @@ image:
   tag: "0.1.3"
 ```
 
-Push to **`develop`**. Argo polls git (about every 3 minutes), sees the tag, rolls the Deployment. The tag **must already exist** on Docker Hub or the pod goes `ImagePullBackOff`.
+Push to **`develop`**. Argo polls git (about every **1 minute**), sees the tag, rolls the Deployment. The tag **must already exist** on Docker Hub or the pod goes `ImagePullBackOff`.
 
 This is already on: `syncPolicy.automated` + `selfHeal: true`.
 
