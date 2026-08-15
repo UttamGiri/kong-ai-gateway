@@ -19,6 +19,4 @@ Build locally (optional):
 docker build -t kong-ai-gateway:local aws/kong
 ```
 
-Ship from GitHub: **Actions → Docker publish Kong AI Gateway → Run workflow**.
-
-Secrets (repo): `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`. Image: `docker.io/<user>/kong-ai-gateway:<tag>`.
+End-to-end pipeline (login, Action, Docker Hub, Helm, Argo CD): **[PIPELINE.md](PIPELINE.md)**.
