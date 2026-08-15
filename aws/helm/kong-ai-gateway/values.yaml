@@ -20,10 +20,10 @@ service:
   managerPort: 8002
 
 istio:
-  enabled: false
+  enabled: true
   gateway:
     selector:
       istio: ingressgateway
     hosts:
-      - kong-ai-gateway.example.internal
+      - "*"
     port: 80

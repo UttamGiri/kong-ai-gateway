@@ -128,11 +128,89 @@ No `kind: Namespace` here. Namespace chart owns `kong-ai-gateway`.
 
 ---
 
-## Cost
+## 4. ClusterIP, Ingress, ALB, NLB, Istio Gateway
+
+EKS does **not** turn on Ingress by itself. If you add nothing, the Service stays **ClusterIP** (this chart). Nothing outside the cluster can call Kong.
+
+| Piece | What it is | Reads HTTP Host/path? | This chart |
+| --- | --- | --- | --- |
+| **Service ClusterIP** | In-cluster VIP only | No | **On** (`service.type: ClusterIP`) |
+| **Ingress** | Kubernetes YAML: host/path → Service | Yes (rules) | Not used |
+| **ALB** | AWS Layer-7 load balancer | Yes | Not created |
+| **NLB** | AWS Layer-4 load balancer (TCP) | No | **On** — Istio `istio-ingressgateway` Service |
+| **Istio Gateway** | Config for Istio’s ingressgateway pods | Yes (with VirtualService) | **On** (`istio.enabled: true`, host `*`) |
+
+**Ingress** is the wish. On EKS, **AWS Load Balancer Controller** reads Ingress and creates an **ALB**. Without that controller, Ingress YAML does nothing.
+
+**NLB** usually skips Ingress: `Service type: LoadBalancer` → AWS NLB → Service → Pod.
+
+```mermaid
+flowchart TB
+  subgraph today ["Today — this cluster"]
+    PC["Laptop"]
+    CIP["Service ClusterIP<br/>kong-ai-gateway :8000"]
+    POD["Kong pod"]
+    PC -.->|"not reachable from internet"| CIP
+    CIP --> POD
+  end
+```
+
+```mermaid
+flowchart LR
+  CLIENT["Client"]
+
+  subgraph alb_path ["Ingress + ALB"]
+    ING["kind: Ingress"]
+    CTRL["AWS Load Balancer Controller"]
+    ALB["AWS ALB HTTP/HTTPS"]
+    ING --> CTRL --> ALB
+  end
+
+  subgraph nlb_path ["NLB only"]
+    LBSVC["Service type LoadBalancer"]
+    NLB["AWS NLB TCP"]
+    LBSVC --> NLB
+  end
+
+  subgraph istio_path ["Istio — off in values.yaml"]
+    GW["Istio Gateway CR"]
+    VS["VirtualService"]
+    IGW["istio-ingressgateway pod"]
+    GW --> IGW
+    VS --> IGW
+  end
+
+  SVC["Service ClusterIP"]
+  POD2["Kong pod"]
+
+  CLIENT --> ALB --> SVC
+  CLIENT --> NLB --> SVC
+  CLIENT --> IGW --> SVC
+  SVC --> POD2
+```
+
+```mermaid
+flowchart TB
+  subgraph compare ["Same destination, different front door"]
+    A["Ingress YAML"] -->|"controller creates"| B["ALB"]
+    C["type: LoadBalancer"] -->|"AWS creates"| D["NLB"]
+    E["Istio Gateway CR"] -->|"configures"| F["Istio ingress pod<br/>often still behind an NLB"]
+    B --> S["Service kong-ai-gateway"]
+    D --> S
+    F --> S
+    S --> P["Pod"]
+  end
+```
+
+ServiceAccount is **not** on this path. It is pod identity, not how traffic enters.
+
+---
+
+## 5. Cost
 
 | Piece | Extra AWS $ |
 | --- | --- |
 | Custom image in Docker Hub / registry | $0 on AWS (not ECR) |
 | Kong pod on existing t3.medium | $0 extra if it fits |
 | ClusterIP Service | $0 |
-| LoadBalancer / NLB | **do not enable** (~$0.66/day) |
+| LoadBalancer / NLB | Istio ingressgateway ≈ **$0.66/day** extra |

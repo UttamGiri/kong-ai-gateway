@@ -48,7 +48,8 @@ resource "aws_subnet" "control_plane" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.cluster_name}-eks-eni"
+    Name                     = "${var.cluster_name}-eks-eni"
+    "kubernetes.io/role/elb" = "1"
   }
 }
 

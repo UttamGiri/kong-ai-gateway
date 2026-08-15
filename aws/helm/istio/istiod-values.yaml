@@ -1,0 +1,20 @@
+# Small istiod for the 1 × t3.medium demo node.
+# Sidecar resources apply to injected pods (Kong).
+pilot:
+  autoscaleEnabled: false
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+global:
+  proxy:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
