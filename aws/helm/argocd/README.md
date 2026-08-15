@@ -19,7 +19,7 @@ Do **not** put `kind: Namespace` here. Keep namespaces in `aws/helm/namespace`.
 
 Dashboard, port-forward, and what lives in the namespace: **[ACCESS.md](ACCESS.md)**.
 
-**AWS cost of this install: $0 extra** if it stays on the existing 1 × t3.medium. Pods are not a second VM. A LoadBalancer Service or a second node would add money — both are off.
+**AWS cost of this install: $0 extra** for a second balancer. The UI shares the existing Istio NLB on **:8080**.
 
 Minimal pods in `argocd` (4):
 

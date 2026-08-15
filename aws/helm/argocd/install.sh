@@ -55,13 +55,17 @@ helm upgrade --install "$RELEASE" "${HELM_REPO_NAME}/argo-cd" \
   --wait \
   --timeout 10m
 
+if kubectl get crd gateways.networking.istio.io >/dev/null 2>&1; then
+  kubectl apply -f "${ROOT}/aws/helm/argocd/istio.yaml"
+fi
+
 echo
-echo "Argo CD is in namespace ${ARGO_NS} (ClusterIP, no load balancer)."
+echo "Argo CD is in namespace ${ARGO_NS} (ClusterIP). Public UI shares the Istio NLB on :8080."
 echo "Admin password:"
 kubectl -n "$ARGO_NS" get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d
 echo
 echo
-echo "UI:"
-echo "  kubectl -n ${ARGO_NS} port-forward svc/argocd-server 8080:80"
-echo "  https://localhost:8080  user: admin"
+echo "UI (same NLB as Kong, extra \$0):"
+echo "  http://ad03799c62bed4c97bb86fa9e9620e21-4fe42c6b263ea65a.elb.us-east-2.amazonaws.com:8080"
+echo "  user: admin"

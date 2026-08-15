@@ -1,0 +1,39 @@
+# Argo CD on the existing Istio NLB (port 8080). No second load balancer.
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: argocd
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 8080
+        name: http-argocd
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: argocd
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - argocd
+  http:
+    - match:
+        - port: 8080
+      route:
+        - destination:
+            host: argocd-server
+            port:
+              number: 80

@@ -29,7 +29,7 @@ http://\<NLB_HOSTNAME\>:8002
 | --- | --- |
 | 80 | Kong proxy |
 | 8002 | Kong Manager UI |
-| 8001 | Admin API (Manager uses this; open to the internet) |
+| 8080 | Argo CD UI |
 
 | Install | Namespace | Role |
 | --- | --- | --- |

@@ -42,3 +42,7 @@ service:
       port: 8002
       protocol: TCP
       targetPort: 8002
+    - name: argocd
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
