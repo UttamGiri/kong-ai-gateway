@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kong-ai-gateway.name" . }}
+  labels:
+    {{- include "kong-ai-gateway.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "kong-ai-gateway.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "kong-ai-gateway.labels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "kong-ai-gateway.name" . }}
+    spec:
+      serviceAccountName: {{ include "kong-ai-gateway.name" . }}
+      containers:
+        - name: gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}

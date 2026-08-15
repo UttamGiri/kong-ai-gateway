@@ -1,0 +1,6 @@
+apiVersion: v2
+name: namespace
+description: Cluster namespaces for Argo CD and Kong AI Gateway. Install before app charts.
+type: application
+version: 0.1.0
+appVersion: "1.0"

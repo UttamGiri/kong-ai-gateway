@@ -1,0 +1,19 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "kong-ai-gateway.name" . }}
+  labels:
+    {{- include "kong-ai-gateway.labels" . | nindent 4 }}
+spec:
+  hosts:
+    {{- toYaml .Values.istio.gateway.hosts | nindent 4 }}
+  gateways:
+    - {{ include "kong-ai-gateway.name" . }}
+  http:
+    - route:
+        - destination:
+            host: {{ include "kong-ai-gateway.name" . }}
+            port:
+              number: {{ .Values.service.port }}
+{{- end }}

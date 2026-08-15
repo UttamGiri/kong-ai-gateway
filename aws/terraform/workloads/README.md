@@ -1,15 +1,11 @@
 # Workloads workspace (`kong-ai-gateway-aws-workload`)
 
-HCP workflow: **CLI-Driven Workflow**.
+HCP workflow: **CLI-Driven Workflow**. Terraform root is **`dev/`**.
 
-Do **not** connect Version Control on this workspace. There is no GitHub repository, branch, or path filter to choose in HCP. Those fields exist only for the version-control workflow (bootstrap).
+| Path | Role |
+| --- | --- |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Diagrams + daily cost |
+| `dev/` | Terraform: VPC, subnet, EKS |
+| `prod/` | Empty |
 
-GitHub is wired through **Actions**, not HCP:
-
-- [Terraform workloads](../../.github/workflows/terraform-workloads.yml)
-- Actions → **Terraform workloads** → **Run workflow** → dropdown **plan** or **apply**
-- A git push does **not** start this workflow
-- Secret `TF_API_TOKEN` (HCP user token)
-- Working directory in the Action: `aws/terraform/workloads`
-
-Apply uses GitHub Environment `workloads` so you can require reviewers later. Plan uses Environment `plan` (no protection needed).
+GitHub Action working directory: `aws/terraform/workloads/dev`. Run from branch **`develop`**.

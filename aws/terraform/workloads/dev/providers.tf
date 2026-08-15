@@ -6,7 +6,7 @@ provider "aws" {
     tags = {
       Project     = "kong-ai-gateway"
       ManagedBy   = "terraform"
-      Environment = "workloads"
+      Environment = "dev"
     }
   }
 }

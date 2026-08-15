@@ -1,0 +1,13 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ include "kong-ai-gateway.name" . }}
+  labels:
+    {{- include "kong-ai-gateway.labels" . | nindent 4 }}
+spec:
+  host: {{ include "kong-ai-gateway.name" . }}
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+{{- end }}
