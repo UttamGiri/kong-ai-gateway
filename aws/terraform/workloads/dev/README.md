@@ -20,7 +20,7 @@ Or set HCP / `terraform.tfvars`: `enabled = false` then apply.
 See [DESTROY.md](DESTROY.md) for the full create list, daily cost, and which switches to set **false**.  
 See [RECREATE.md](RECREATE.md) for destroy → create again (no soft delete).
 
-Default worker: **1 × t3.medium** (one public IPv4). Use the Action dropdown `t3.small` only if you want to save ~$0.50/day.
+Default worker: **1 × t3.medium** (one public IPv4).
 
 ## $20 / month billing alert
 

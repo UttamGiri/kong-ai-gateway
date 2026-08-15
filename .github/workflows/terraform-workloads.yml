@@ -17,14 +17,6 @@ on:
         description: true = create/keep demo AWS. false = apply destroys the whole stack (hard delete).
         type: boolean
         default: true
-      node_instance_type:
-        description: Worker size. Default t3.medium (4 GB). t3.small saves ~$0.50/day but may OOM.
-        type: choice
-        required: true
-        default: t3.medium
-        options:
-          - t3.small
-          - t3.medium
 
 permissions:
   contents: read
@@ -35,11 +27,11 @@ env:
   TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
   TF_IN_AUTOMATION: "true"
   TF_VAR_enabled: ${{ inputs.enabled }}
-  TF_VAR_node_instance_type: ${{ inputs.node_instance_type }}
+  TF_VAR_node_instance_type: t3.medium
 
 jobs:
   terraform:
-    name: ${{ inputs.command }} / enabled=${{ inputs.enabled }} / ${{ inputs.node_instance_type }}
+    name: ${{ inputs.command }} / enabled=${{ inputs.enabled }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.command == 'apply' && 'workloads' || 'plan' }}
     defaults:
