@@ -12,10 +12,12 @@ terraform {
     }
   }
 
-  # Phase 1: local state. Do not use the cloud backend until OIDC trust exists.
-  # Phase 2: migrate this state to the bootstrap workspace on app.terraform.io.
-  # See backend.cloud.tf.example and hcp-terraform-aws-bootstrap.md.
-  backend "local" {
-    path = "terraform.tfstate"
+  # State lives in HCP Terraform workspace kong-ai-gateway-aws-bootstrap.
+  cloud {
+    organization = "vaflt-org"
+
+    workspaces {
+      name = "kong-ai-gateway-aws-bootstrap"
+    }
   }
 }
