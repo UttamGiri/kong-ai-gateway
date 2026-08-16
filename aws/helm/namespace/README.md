@@ -9,11 +9,9 @@ Creates two Kubernetes namespaces. Run this **before** Argo CD. This is not Terr
 
 ## AWS login vs EKS
 
-`aws sso login` / AWS keys talk to **AWS APIs**. Helm and kubectl talk to the **Kubernetes API** on the EKS endpoint. You need both: AWS creds, then kubeconfig.
+`aws sso login` / AWS keys talk to **AWS APIs**. Helm and kubectl talk to the **Kubernetes API** on the EKS endpoint. You need AWS creds on this PC; `install.sh` does kubeconfig, access entry, and Helm.
 
 ```bash
-aws eks update-kubeconfig --name kong-ai-dev --region us-east-2
-kubectl get ns
 ./aws/helm/namespace/install.sh
 ```
 

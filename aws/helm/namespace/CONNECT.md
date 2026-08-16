@@ -2,7 +2,7 @@
 
 Cluster: **`kong-ai-dev`** · Region: **`us-east-2`** · Account: **`593024667763`**
 
-This is **not** Terraform. Namespaces are Kubernetes objects. Create them with Helm after kubectl can reach the cluster.
+This is **not** Terraform. Namespaces are Kubernetes objects. `./aws/helm/namespace/install.sh` writes kubeconfig, enables API auth if needed, grants this IAM user an access entry, then Helm-creates the namespaces.
 
 ```mermaid
 flowchart LR
@@ -52,7 +52,7 @@ AWS login alone is not enough. AWS APIs ≠ Kubernetes API.
 - IAM permission to call `eks:DescribeCluster`
 - An **EKS access entry** (or aws-auth) so that IAM user is allowed on the cluster. Without it, kubeconfig writes successfully but `kubectl get ns` returns **Unauthorized**.
 
-**Write / refresh the EKS context:**
+`install.sh` runs `aws eks update-kubeconfig` for you. To do it by hand:
 
 ```bash
 aws eks update-kubeconfig --name kong-ai-dev --region us-east-2
@@ -101,22 +101,7 @@ Kubernetes API  (create namespaces, pods, helm installs)
 
 Authentication mode must be **`API_AND_CONFIG_MAP`** (or `API`). `CONFIG_MAP` only cannot use access entries.
 
-This demo already has the entry. Recreate it only if you rebuild the cluster or `kubectl` is Unauthorized again:
-
-```bash
-aws eks create-access-entry \
-  --cluster-name kong-ai-dev \
-  --principal-arn arn:aws:iam::593024667763:user/uttam-kubectl-demo \
-  --type STANDARD \
-  --region us-east-2
-
-aws eks associate-access-policy \
-  --cluster-name kong-ai-dev \
-  --principal-arn arn:aws:iam::593024667763:user/uttam-kubectl-demo \
-  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
-  --access-scope type=cluster \
-  --region us-east-2
-```
+`install.sh` switches `CONFIG_MAP` → `API_AND_CONFIG_MAP` if needed, then creates this access entry for whoever `aws sts get-caller-identity` is. Re-run the script after a cluster recreate; the AWS calls are idempotent.
 
 HCP Terraform still uses role **`hcp-terraform-run`** (OIDC). That is a different principal. Helm on this PC does **not** assume that role.
 
@@ -125,13 +110,14 @@ HCP Terraform still uses role **`hcp-terraform-run`** (OIDC). That is a differen
 ## What you need to deploy namespaces
 
 1. Cluster **ACTIVE** (Terraform already applied).
-2. kubeconfig pointing at `kong-ai-dev` (command above).
-3. `kubectl get ns` works (not Unauthorized).
-4. Run the install script from the repo root:
+2. AWS CLI logged in as the laptop user (`uttam-kubectl-demo`).
+3. From the repo root:
 
 ```bash
 ./aws/helm/namespace/install.sh
 ```
+
+That one script: kubeconfig → `API_AND_CONFIG_MAP` if needed → access entry → Helm namespaces.
 
 That Helm chart creates:
 
@@ -187,4 +173,4 @@ AWS console: **EKS → kong-ai-dev → Resources → Pods** (same caveat as name
 
 ## If `kubectl` says Unauthorized
 
-kubeconfig is fine; the **access entry** is missing or the wrong principal. See **What an EKS access entry is** above and run the two `aws eks` commands.
+kubeconfig is fine; the **access entry** is missing, the wrong principal, or the cluster is still `CONFIG_MAP`. Re-run `./aws/helm/namespace/install.sh`. It waits for the auth-mode update before creating the entry.

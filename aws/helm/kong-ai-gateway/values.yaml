@@ -22,7 +22,7 @@ service:
 istio:
   enabled: true
   # NLB hostname from: kubectl -n istio-ingress get svc istio-ingressgateway
-  publicHost: ad03799c62bed4c97bb86fa9e9620e21-4fe42c6b263ea65a.elb.us-east-2.amazonaws.com
+  publicHost: a406234f3b9514370af20af3e3bcbc87-e7498624ae20e839.elb.us-east-2.amazonaws.com
   gateway:
     selector:
       istio: ingressgateway

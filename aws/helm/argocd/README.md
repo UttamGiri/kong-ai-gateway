@@ -101,12 +101,9 @@ flowchart LR
 
 ## Install (after EKS is Ready)
 
-AWS login is **not** enough. Point kubectl at the cluster, create namespaces, then Argo CD:
+AWS login is **not** enough. The namespace script writes kubeconfig, grants this IAM user cluster access, then creates namespaces. Then Argo CD:
 
 ```bash
-aws eks update-kubeconfig --name kong-ai-dev --region us-east-2
-kubectl get ns
-
 ./aws/helm/namespace/install.sh
 ./aws/helm/argocd/install.sh
 ```
