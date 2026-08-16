@@ -2,6 +2,8 @@
 
 Terraform does **not** call Helm in this repo. Cluster plumbing is Terraform. Apps (Kong, Argo CD, Istio) are Helm / Argo CD. Each Terraform **workspace** has its **own state**. That is the same idea as different S3 keys / folders: delete or destroy one state and the others stay.
 
+GitHub + S3 + `helm_release` vs GitHub → HCP + Argo, locking, what changes often, registry pinning: **[ARCHITECTURE-DECISION.md](./ARCHITECTURE-DECISION.md)**.
+
 ```mermaid
 flowchart TB
   subgraph fused ["Fused — Terraform calls Helm<br/>ONE state file"]
