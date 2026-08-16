@@ -89,7 +89,8 @@ jobs:
             --phase apply \
             --exitcode "${{ steps.apply.outputs.exitcode || 1 }}" \
             --log aws/terraform/workloads/dev/apply.txt \
-            --workdir aws/terraform/workloads/dev
+            --workdir aws/terraform/workloads/dev \
+            --plan-file aws/terraform/workloads/dev/tfplan
 
       - name: Fail on apply error
         if: ${{ inputs.command == 'apply' && steps.apply.outcome != 'skipped' && steps.apply.outputs.exitcode != '0' }}

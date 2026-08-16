@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -26,6 +28,24 @@ ACTION_EMOJI = {
     "replace": "🟠",
 }
 
+# GitHub-like greens/reds so add vs destroy is obvious in the job summary.
+ACTION_FG = {
+    "create": "#1a7f37",
+    "delete": "#cf222e",
+    "replace": "#cf222e",
+    "update": "#9a6700",
+}
+
+ACTION_BG = {
+    "create": "#dafbe1",
+    "delete": "#ffebe9",
+    "replace": "#ffebe9",
+    "update": "#fff8c5",
+}
+
+ADD_COUNT_RE = re.compile(r"(\d+)\s+(to add|added)", re.I)
+DESTROY_COUNT_RE = re.compile(r"(\d+)\s+(to destroy|destroyed)", re.I)
+
 
 def append_summary(text: str) -> None:
     path = os.environ.get("GITHUB_STEP_SUMMARY")
@@ -45,6 +65,14 @@ def tail_text(path: Path, limit: int = 8000) -> str:
     if len(data) <= limit:
         return data
     return data[-limit:]
+
+
+def colored(text: str, action: str, *, bold: bool = True) -> str:
+    fg = ACTION_FG.get(action)
+    if not fg:
+        return html.escape(text)
+    weight = "font-weight:700;" if bold else ""
+    return f'<span style="color:{fg};{weight}">{html.escape(text)}</span>'
 
 
 def resource_action(actions: list[str]) -> str:
@@ -86,6 +114,38 @@ def load_plan_json(workdir: Path, plan_file: Path) -> dict | None:
         return None
 
 
+def count_phrase(n: int, label: str, action: str) -> str:
+    text = f"{n} {label}"
+    if n <= 0:
+        return text
+    return colored(text, action)
+
+
+def write_resource_table(resources: list[tuple[str, str]]) -> None:
+    append_summary("<table>")
+    append_summary("<tr><th>Status</th><th>Action</th><th>Resource</th></tr>")
+    for address, action in resources:
+        emoji = ACTION_EMOJI.get(action, "⚪")
+        label = ACTION_LABEL.get(action, action)
+        bg = ACTION_BG.get(action, "#ffffff")
+        fg = ACTION_FG.get(action, "#1f2328")
+        append_summary(
+            f'<tr style="background-color:{bg};color:{fg}">'
+            f"<td>{emoji}</td>"
+            f"<td><strong>{html.escape(label)}</strong></td>"
+            f"<td><code>{html.escape(address)}</code></td>"
+            f"</tr>"
+        )
+    append_summary("</table>")
+    append_summary("")
+    append_summary(
+        f"{colored('add', 'create')} &nbsp; "
+        f"{colored('destroy', 'delete')} &nbsp; "
+        "🟠 replace &nbsp; 🟡 change"
+    )
+    append_summary("")
+
+
 def write_plan_summary(exitcode: int, log: Path, workdir: Path, plan_file: Path) -> None:
     log_text = tail_text(log)
     if exitcode == 1:
@@ -117,23 +177,15 @@ def write_plan_summary(exitcode: int, log: Path, workdir: Path, plan_file: Path)
         append_summary("> [!WARNING]")
         append_summary(
             "> **Terraform plan succeeded** — "
-            f"{counts['create']} add, {counts['update']} change, "
-            f"{counts['delete']} destroy, {counts['replace']} replace"
+            f"{count_phrase(counts['create'], 'add', 'create')}, "
+            f"{counts['update']} change, "
+            f"{count_phrase(counts['delete'], 'destroy', 'delete')}, "
+            f"{counts['replace']} replace"
         )
     append_summary("")
 
     if resources:
-        append_summary("| Status | Action | Resource |")
-        append_summary("| --- | --- | --- |")
-        for address, action in resources:
-            emoji = ACTION_EMOJI.get(action, "⚪")
-            label = ACTION_LABEL.get(action, action)
-            if action == "delete":
-                label = f"<strong>{label}</strong>"
-            append_summary(f"| {emoji} | {label} | `{address}` |")
-        append_summary("")
-        append_summary("🔴 destroy &nbsp; 🟠 replace &nbsp; 🟡 change &nbsp; 🟢 add")
-        append_summary("")
+        write_resource_table(resources)
     elif exitcode == 2:
         append_summary("_Could not parse a resource table from the remote plan JSON._")
         append_summary("")
@@ -143,7 +195,50 @@ def write_plan_summary(exitcode: int, log: Path, workdir: Path, plan_file: Path)
         append_summary("")
 
 
-def write_apply_summary(exitcode: int, log: Path) -> None:
+def apply_line_action(line: str) -> str | None:
+    lower = line.lower()
+    if ": destroying" in lower or "destruction complete" in lower:
+        return "delete"
+    if ": creating" in lower or "creation complete" in lower:
+        return "create"
+    return None
+
+
+def colorize_count_line(line: str) -> str:
+    def paint(match: re.Match[str], action: str) -> str:
+        if int(match.group(1)) <= 0:
+            return html.escape(match.group(0))
+        return colored(match.group(0), action)
+
+    escaped = html.escape(line)
+    escaped = ADD_COUNT_RE.sub(lambda m: paint(m, "create"), escaped)
+    escaped = DESTROY_COUNT_RE.sub(lambda m: paint(m, "delete"), escaped)
+    return escaped
+
+
+def colorize_apply_log(log_text: str) -> str:
+    blocks: list[str] = []
+    for raw in log_text.splitlines():
+        line = raw.rstrip("\n")
+        if ADD_COUNT_RE.search(line) or DESTROY_COUNT_RE.search(line):
+            blocks.append(colorize_count_line(line))
+            continue
+        action = apply_line_action(line)
+        if action:
+            bg = ACTION_BG[action]
+            fg = ACTION_FG[action]
+            blocks.append(
+                f'<span style="display:block;background-color:{bg};color:{fg};'
+                f'font-weight:700">{html.escape(line)}</span>'
+            )
+            continue
+        blocks.append(html.escape(line))
+    return "\n".join(blocks)
+
+
+def write_apply_summary(
+    exitcode: int, log: Path, workdir: Path, plan_file: Path | None
+) -> None:
     log_text = tail_text(log)
     if exitcode != 0:
         append_summary("> [!CAUTION]")
@@ -161,9 +256,20 @@ def write_apply_summary(exitcode: int, log: Path) -> None:
     append_summary("> [!TIP]")
     append_summary("> **Terraform apply succeeded**")
     append_summary("")
-    append_summary("```")
-    append_summary(log_text[-4000:])
-    append_summary("```")
+
+    resources: list[tuple[str, str]] = []
+    if plan_file:
+        plan_json = load_plan_json(workdir, plan_file)
+        if plan_json:
+            resources = plan_resources(plan_json)
+    if resources:
+        write_resource_table(resources)
+
+    append_summary(
+        '<pre style="white-space:pre-wrap;font-size:12px">'
+        + colorize_apply_log(log_text[-4000:])
+        + "</pre>"
+    )
     append_summary("")
 
 
@@ -180,7 +286,7 @@ def main() -> int:
         plan_file = args.plan_file or (args.workdir / "tfplan")
         write_plan_summary(args.exitcode, args.log, args.workdir, plan_file)
     else:
-        write_apply_summary(args.exitcode, args.log)
+        write_apply_summary(args.exitcode, args.log, args.workdir, args.plan_file)
     return 0
 
 
