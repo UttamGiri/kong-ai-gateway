@@ -1,7 +1,9 @@
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   role_arn = aws_iam_role.cluster.arn
-  version  = "1.36"
+  # STANDARD support ($0.10/hr). 1.31 is extended ($0.60/hr). Recreate to land on 1.36;
+  # AWS will not jump 1.31 → 1.36 in place.
+  version = "1.36"
 
   vpc_config {
     subnet_ids              = [aws_subnet.nodes.id, aws_subnet.control_plane.id]
@@ -10,11 +12,21 @@ resource "aws_eks_cluster" "this" {
     public_access_cidrs     = ["0.0.0.0/0"]
   }
 
+  upgrade_policy {
+    support_type = "STANDARD"
+  }
+
   enabled_cluster_log_types = []
 
   timeouts {
     create = "30m"
     delete = "30m"
+  }
+
+  lifecycle {
+    ignore_changes = [
+      bootstrap_self_managed_addons,
+    ]
   }
 
   depends_on = [aws_iam_role_policy_attachment.cluster]
@@ -82,6 +94,16 @@ resource "aws_eks_node_group" "this" {
     create = "30m"
     delete = "30m"
     update = "30m"
+  }
+
+  # Do not roll the node (new EC2 bill + downtime) when AWS publishes a new AMI
+  # or the launch template gets a new version from an unrelated apply.
+  lifecycle {
+    ignore_changes = [
+      launch_template,
+      release_version,
+      version,
+    ]
   }
 
   depends_on = [
