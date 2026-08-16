@@ -6,15 +6,15 @@ This is the **proxy image**. The Konnect login dashboard is still a Kong website
 
 Kong Manager GUI listens on **8002** (read-only in DB-less). Proxy **8000**, Admin API **8001**.
 
-The plugin is **not** inside the Helm chart. It lives in `plugins/custom-header/`. The Dockerfile copies it into the image.
+Plugins are **not** inside the Helm chart. They live in `plugins/`. The Dockerfile copies them into the image.
 
 ```text
 aws/kong/
-├── Dockerfile                 # FROM kong/kong-gateway:3.9 + COPY plugin
-├── kong.yml                   # DB-less config (plugin enabled)
-└── plugins/custom-header/     # injected at build time
-    ├── handler.lua
-    └── schema.lua
+├── Dockerfile                 # FROM kong/kong-gateway:3.9 + COPY plugins
+├── kong.yml                   # DB-less config (plugins enabled)
+└── plugins/
+    ├── custom-header/         # X-Kong-AI-Gateway
+    └── custom-request-id/     # X-Request-Id
 ```
 
 Build locally (optional):

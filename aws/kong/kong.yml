@@ -14,3 +14,6 @@ plugins:
     config:
       header_name: X-Kong-AI-Gateway
       header_value: oss
+  - name: custom-request-id
+    config:
+      header_name: X-Request-Id
