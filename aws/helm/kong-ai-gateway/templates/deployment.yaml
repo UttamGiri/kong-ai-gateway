@@ -11,15 +11,26 @@ spec:
       app.kubernetes.io/name: {{ include "kong-ai-gateway.name" . }}
   template:
     metadata:
+      annotations:
+        checksum/declarative: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         {{- include "kong-ai-gateway.labels" . | nindent 8 }}
         app.kubernetes.io/name: {{ include "kong-ai-gateway.name" . }}
     spec:
       serviceAccountName: {{ include "kong-ai-gateway.name" . }}
+      volumes:
+        - name: declarative
+          configMap:
+            name: {{ include "kong-ai-gateway.name" . }}-declarative
       containers:
         - name: gateway
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: declarative
+              mountPath: /kong/declarative/kong.yml
+              subPath: kong.yml
+              readOnly: true
           env:
             - name: KONG_ADMIN_GUI_LISTEN
               value: "0.0.0.0:{{ .Values.service.managerPort }}"

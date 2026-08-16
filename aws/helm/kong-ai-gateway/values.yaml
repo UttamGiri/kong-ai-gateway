@@ -3,6 +3,17 @@ image:
   tag: "0.1.5"
   pullPolicy: IfNotPresent
 
+# One custom plugin at a time. Lua for both stays in the image (no Docker rebuild).
+# Switch: custom-header | custom-request-id  then push develop; Argo syncs.
+plugin: custom-header
+
+plugins:
+  custom-header:
+    header_name: X-Kong-AI-Gateway
+    header_value: oss
+  custom-request-id:
+    header_name: X-Request-Id
+
 replicaCount: 1
 
 resources:
