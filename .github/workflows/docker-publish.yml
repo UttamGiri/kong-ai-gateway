@@ -1,15 +1,12 @@
-# CLI-driven or push to aws/kong/**: build image, bump Helm image.tag, Argo CD redeploys.
+# CLI-driven: build image, bump Helm image.tag, Argo CD redeploys.
 # Actions → Docker publish Kong AI Gateway → Run workflow from develop.
 # Secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
 # Image tag is always values.yaml patch + 1. No workflow input.
+# A git push does not build (same as Terraform workloads).
 name: Docker publish Kong AI Gateway
 
 on:
   workflow_dispatch:
-  push:
-    branches: [develop]
-    paths:
-      - "aws/kong/**"
 
 permissions:
   contents: write

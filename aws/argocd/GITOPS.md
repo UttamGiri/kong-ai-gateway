@@ -76,7 +76,7 @@ This is already on: `syncPolicy.automated` + `selfHeal: true`.
 
 1. Change `aws/kong/plugins/custom-header/`, `kong.yml`, or `Dockerfile`
 2. Push to **`develop`**
-3. Run **Actions → Docker publish Kong AI Gateway** (or let the `aws/kong/**` push trigger run it)
+3. Run **Actions → Docker publish Kong AI Gateway** (`workflow_dispatch` only; a git push does not build)
 4. The job: builds, pushes Hub, **bumps patch** (`0.1.2` → `0.1.3`), commits `values.yaml`
 5. Argo sees the new `image.tag` and redeploys
 
