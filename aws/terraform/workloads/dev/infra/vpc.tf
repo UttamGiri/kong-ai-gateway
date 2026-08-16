@@ -15,7 +15,8 @@ resource "aws_vpc" "this" {
   enable_dns_support   = true
 
   tags = {
-    Name = "${var.cluster_name}-vpc"
+    Name     = "${var.cluster_name}-vpc"
+    Pipeline = "github-actions"
   }
 }
 
