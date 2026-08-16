@@ -55,7 +55,9 @@ jobs:
         id: plan
         run: |
           set +e
-          terraform plan -input=false -no-color -detailed-exitcode -out=tfplan | tee plan.txt
+          terraform plan -input=false -no-color -detailed-exitcode -out=tfplan \
+            | tee plan.txt \
+            | python3 "$GITHUB_WORKSPACE/.github/scripts/terraform_job_summary.py" --phase colorize-stream
           echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Plan summary
@@ -78,7 +80,9 @@ jobs:
         if: ${{ inputs.command == 'apply' && steps.plan.outputs.exitcode != '1' }}
         run: |
           set +e
-          terraform apply -input=false -no-color tfplan | tee apply.txt
+          terraform apply -input=false -no-color tfplan \
+            | tee apply.txt \
+            | python3 "$GITHUB_WORKSPACE/.github/scripts/terraform_job_summary.py" --phase colorize-stream
           echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Apply summary

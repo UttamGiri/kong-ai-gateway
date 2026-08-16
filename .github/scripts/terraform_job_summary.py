@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Write a GitHub Actions job summary table for Terraform plan/apply."""
+"""Write a GitHub Actions job summary table for Terraform plan/apply.
+
+Also ANSI-colorizes terraform plan/apply logs (green add, red destroy) so the
+Terraform plan / Terraform apply steps show color in the Actions log.
+"""
 
 from __future__ import annotations
 
@@ -45,6 +49,14 @@ ACTION_BG = {
 
 ADD_COUNT_RE = re.compile(r"(\d+)\s+(to add|added)", re.I)
 DESTROY_COUNT_RE = re.compile(r"(\d+)\s+(to destroy|destroyed)", re.I)
+
+ANSI = {
+    "create": "\033[1;32m",
+    "delete": "\033[1;31m",
+    "replace": "\033[1;31m",
+    "update": "\033[1;33m",
+}
+ANSI_RESET = "\033[0m"
 
 
 def append_summary(text: str) -> None:
@@ -146,6 +158,87 @@ def write_resource_table(resources: list[tuple[str, str]]) -> None:
     append_summary("")
 
 
+def cli_line_action(line: str) -> str | None:
+    """Classify a terraform plan/apply log line as add, destroy, replace, or change."""
+    lower = line.lower()
+    core = line.lstrip()
+    if "must be replaced" in lower or core.startswith("-/+"):
+        return "replace"
+    if "will be destroyed" in lower or ": destroying" in lower or "destruction complete" in lower:
+        return "delete"
+    if "will be created" in lower or ": creating" in lower or "creation complete" in lower:
+        return "create"
+    if "will be updated" in lower:
+        return "update"
+    if core.startswith("+"):
+        return "create"
+    if core.startswith("-"):
+        return "delete"
+    if core.startswith("~"):
+        return "update"
+    return None
+
+
+def ansi_paint_counts(line: str) -> str:
+    def paint(match: re.Match[str], action: str) -> str:
+        if int(match.group(1)) <= 0:
+            return match.group(0)
+        return f"{ANSI[action]}{match.group(0)}{ANSI_RESET}"
+
+    out = ADD_COUNT_RE.sub(lambda m: paint(m, "create"), line)
+    return DESTROY_COUNT_RE.sub(lambda m: paint(m, "delete"), out)
+
+
+def ansi_colorize_line(line: str) -> str:
+    if ADD_COUNT_RE.search(line) or DESTROY_COUNT_RE.search(line):
+        return ansi_paint_counts(line)
+    action = cli_line_action(line)
+    if not action:
+        return line
+    return f"{ANSI[action]}{line}{ANSI_RESET}"
+
+
+def colorize_stream() -> None:
+    for line in sys.stdin:
+        body = line[:-1] if line.endswith("\n") else line
+        sys.stdout.write(ansi_colorize_line(body))
+        if line.endswith("\n"):
+            sys.stdout.write("\n")
+        sys.stdout.flush()
+
+
+def colorize_count_line(line: str) -> str:
+    def paint(match: re.Match[str], action: str) -> str:
+        if int(match.group(1)) <= 0:
+            return html.escape(match.group(0))
+        return colored(match.group(0), action)
+
+    escaped = html.escape(line)
+    escaped = ADD_COUNT_RE.sub(lambda m: paint(m, "create"), escaped)
+    escaped = DESTROY_COUNT_RE.sub(lambda m: paint(m, "delete"), escaped)
+    return escaped
+
+
+def html_colorize_log(log_text: str) -> str:
+    blocks: list[str] = []
+    for raw in log_text.splitlines():
+        line = raw.rstrip("\n")
+        if ADD_COUNT_RE.search(line) or DESTROY_COUNT_RE.search(line):
+            blocks.append(colorize_count_line(line))
+            continue
+        action = cli_line_action(line)
+        if action:
+            bg = ACTION_BG[action]
+            fg = ACTION_FG[action]
+            blocks.append(
+                f'<span style="display:block;background-color:{bg};color:{fg};'
+                f'font-weight:700">{html.escape(line)}</span>'
+            )
+            continue
+        blocks.append(html.escape(line))
+    return "\n".join(blocks)
+
+
 def write_plan_summary(exitcode: int, log: Path, workdir: Path, plan_file: Path) -> None:
     log_text = tail_text(log)
     if exitcode == 1:
@@ -189,51 +282,14 @@ def write_plan_summary(exitcode: int, log: Path, workdir: Path, plan_file: Path)
     elif exitcode == 2:
         append_summary("_Could not parse a resource table from the remote plan JSON._")
         append_summary("")
-        append_summary("```")
-        append_summary(log_text[-4000:])
-        append_summary("```")
+
+    if log_text:
+        append_summary(
+            '<pre style="white-space:pre-wrap;font-size:12px">'
+            + html_colorize_log(log_text[-4000:])
+            + "</pre>"
+        )
         append_summary("")
-
-
-def apply_line_action(line: str) -> str | None:
-    lower = line.lower()
-    if ": destroying" in lower or "destruction complete" in lower:
-        return "delete"
-    if ": creating" in lower or "creation complete" in lower:
-        return "create"
-    return None
-
-
-def colorize_count_line(line: str) -> str:
-    def paint(match: re.Match[str], action: str) -> str:
-        if int(match.group(1)) <= 0:
-            return html.escape(match.group(0))
-        return colored(match.group(0), action)
-
-    escaped = html.escape(line)
-    escaped = ADD_COUNT_RE.sub(lambda m: paint(m, "create"), escaped)
-    escaped = DESTROY_COUNT_RE.sub(lambda m: paint(m, "delete"), escaped)
-    return escaped
-
-
-def colorize_apply_log(log_text: str) -> str:
-    blocks: list[str] = []
-    for raw in log_text.splitlines():
-        line = raw.rstrip("\n")
-        if ADD_COUNT_RE.search(line) or DESTROY_COUNT_RE.search(line):
-            blocks.append(colorize_count_line(line))
-            continue
-        action = apply_line_action(line)
-        if action:
-            bg = ACTION_BG[action]
-            fg = ACTION_FG[action]
-            blocks.append(
-                f'<span style="display:block;background-color:{bg};color:{fg};'
-                f'font-weight:700">{html.escape(line)}</span>'
-            )
-            continue
-        blocks.append(html.escape(line))
-    return "\n".join(blocks)
 
 
 def write_apply_summary(
@@ -267,7 +323,7 @@ def write_apply_summary(
 
     append_summary(
         '<pre style="white-space:pre-wrap;font-size:12px">'
-        + colorize_apply_log(log_text[-4000:])
+        + html_colorize_log(log_text[-4000:])
         + "</pre>"
     )
     append_summary("")
@@ -275,13 +331,22 @@ def write_apply_summary(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phase", choices=["plan", "apply"], required=True)
-    parser.add_argument("--exitcode", type=int, required=True)
-    parser.add_argument("--log", type=Path, required=True)
+    parser.add_argument(
+        "--phase",
+        choices=["plan", "apply", "colorize-stream"],
+        required=True,
+    )
+    parser.add_argument("--exitcode", type=int, default=0)
+    parser.add_argument("--log", type=Path, default=None)
     parser.add_argument("--workdir", type=Path, default=Path.cwd())
     parser.add_argument("--plan-file", type=Path, default=None)
     args = parser.parse_args()
 
+    if args.phase == "colorize-stream":
+        colorize_stream()
+        return 0
+    if not args.log:
+        parser.error("--log is required for plan and apply")
     if args.phase == "plan":
         plan_file = args.plan_file or (args.workdir / "tfplan")
         write_plan_summary(args.exitcode, args.log, args.workdir, plan_file)
