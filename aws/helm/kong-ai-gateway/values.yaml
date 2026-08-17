@@ -1,6 +1,6 @@
 image:
   repository: docker.io/uttamgiri32/kong-ai-gateway
-  tag: "0.1.14"
+  tag: "0.1.15"
   pullPolicy: IfNotPresent
 
 replicaCount: 1
