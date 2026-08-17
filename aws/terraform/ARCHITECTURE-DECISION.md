@@ -55,6 +55,116 @@ GitHub **does** run `terraform plan` / `apply` in the Action. With `cloud {}`, t
 
 ---
 
+## Concrete comparison (this platform)
+
+Same cluster: **`kong-ai-dev`**, account **`593024667763`**, region **`us-east-2`**. Same two changes. Only the operating model differs.
+
+### What you would own
+
+| | Option 1 (if we had fused it) | Option 2 (what we run) |
+| --- | --- | --- |
+| State | `s3://…/workloads/dev/terraform.tfstate` (VPC + EKS + `helm_release` Kong) | HCP workspace **`kong-ai-gateway-aws-workload`** = VPC + EKS + node + budget only |
+| Second state | (none, or you invent another S3 key) | HCP **`kong-ai-gateway-aws-bootstrap`** = OIDC + `hcp-terraform-run` |
+| Kong | `helm_release` in that same TF state | Argo Application `kong-ai-gateway` → chart `aws/helm/kong-ai-gateway` |
+| Image | Still Docker, but TF must apply to change the tag | Action **Docker publish Kong AI Gateway** bumps `image.tag`; Argo syncs |
+| Lock | `s3://…/terraform.tfstate.tflock` | HCP run `RUNNING` / `PENDING` on that workspace |
+| GitHub secret | AWS role **and** S3 **and** often kubeconfig | **`TF_API_TOKEN`** only on the Terraform workflow |
+| Apply Kong | GitHub environment + `terraform apply` | Push `develop` or Docker workflow; **no** Terraform |
+
+### Change A — add / fix plugin `custom-request-id`
+
+Files: `aws/kong/Dockerfile`, `aws/kong/kong.yml`, `aws/kong/plugins/custom-request-id/`.
+
+| Step | Option 1 | Option 2 (this repo) |
+| --- | --- | --- |
+| 1 | Edit Lua + `kong.yml` | Same |
+| 2 | Docker build (or bake in TF) | **Actions → Docker publish** (`workflow_dispatch`) |
+| 3 | `terraform plan` on the **EKS workspace** | HCP workloads workspace is **idle** |
+| 4 | Plan may also show node AMI, SG, IAM drift | Plan: none. Argo sees `image.tag` `0.1.8` → `0.1.9` |
+| 5 | `terraform apply` — lock the **whole** stack ~5–15 min | Argo poll ~60s (+ jitter); pod roll ~1–2 min |
+| Blast radius | One bad apply can touch EKS | EKS unchanged. Bad image = Kong pod only |
+| Rollback | `terraform apply` previous tag (re-locks EKS state) | Revert git / previous Hub tag; Argo syncs |
+
+**Option 2 commands that actually exist:**
+
+```bash
+# GitHub: Actions → Docker publish Kong AI Gateway → Run workflow (develop)
+# Then Argo Application kong-ai-gateway → Synced
+kubectl -n kong-ai-gateway get deploy,pods
+```
+
+No `terraform apply`. No S3. No `helm_release`.
+
+### Change B — EKS 1.31 → 1.36 (or node type)
+
+File: `aws/terraform/workloads/dev/infra/eks.tf` (`version = "1.36"`).
+
+| Step | Option 1 | Option 2 |
+| --- | --- | --- |
+| 1 | Same TF edit | Same |
+| 2 | GitHub Action `terraform apply` **on the runner** talks to AWS | GitHub Action runs `terraform apply`; **HCP** talks to AWS |
+| 3 | Runner needs `eks:*`, VPC, IAM, S3 | Runner needs **`TF_API_TOKEN`**. AWS = role `hcp-terraform-run` |
+| 4 | Kong `helm_release` is in the same plan — easy to mix | Workloads plan is VPC/EKS/budget only. Kong not in the graph |
+| 5 | Lock: S3 object | Lock: HCP run queue (second click waits) |
+
+**Option 2 commands that actually exist:**
+
+```text
+Actions → Terraform workloads → Run workflow
+  command: apply
+  enabled: true
+Workspace: kong-ai-gateway-aws-workload
+Identity on AWS: arn:aws:iam::593024667763:role/hcp-terraform-run
+```
+
+### Same minute, two people
+
+| | Option 1 | Option 2 |
+| --- | --- | --- |
+| You apply EKS | Holds S3 lock | HCP run **RUNNING** |
+| Teammate applies EKS | `Error acquiring state lock` — workflow red; maybe `force-unlock` | Second run **PENDING**, then starts |
+| Teammate ships a Kong plugin | **Blocked** on the same lock if Kong is `helm_release` in that state | **Not blocked** — Docker + Argo, different system |
+
+### Credentials on the GitHub runner
+
+| Secret / identity | Option 1 | Option 2 Terraform workflow | Option 2 Docker workflow |
+| --- | --- | --- | --- |
+| AWS to create EKS | Yes (WIF or keys) | No | No |
+| S3 Get/Put + lock | Yes | No | No |
+| `kubectl` / Helm to cluster | Often yes | No | No |
+| HCP `TF_API_TOKEN` | No | Yes | No |
+| `DOCKERHUB_USERNAME` / `TOKEN` | Maybe | No | Yes |
+
+### What a fused `terraform plan` can look like (why we refuse it)
+
+If Kong were `helm_release` in workloads state, a “just bump plugin tag” plan can still contain:
+
+```text
+~ aws_eks_node_group.this          # AWS published a new AMI
+~ aws_iam_role.nodes               # drift
+~ helm_release.kong                # image.tag 0.1.8 → 0.1.9
+```
+
+You wanted one Helm change. Terraform evaluated **the entire state**.
+
+This repo’s workloads plan, for the same plugin git commit:
+
+```text
+No changes. Infrastructure is up-to-date.
+```
+
+Kong moves in Argo instead.
+
+### Clock (order of magnitude)
+
+| Job | Option 1 (fused) | Option 2 |
+| --- | --- | --- |
+| Plugin only | 10–20 min (TF lock + Helm) | ~5–8 min Docker + ~1 min Argo |
+| EKS version | 15–30 min | 15–30 min (HCP, not GHA CPU) |
+| Uninstall Istio NLB (~$0.66/day) | `terraform apply` if NLB is in state | `./aws/helm/istio/uninstall.sh` — EKS stays |
+
+---
+
 ## Full comparison
 
 | Area | 1. GHA + TF + S3 + Helm | 2. GitHub → TFE/HCP + Argo | Winner |
