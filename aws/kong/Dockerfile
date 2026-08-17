@@ -23,7 +23,7 @@
 #     KONG_ADMIN_ERROR_LOG=/dev/stderr \
 #     KONG_LUA_PACKAGE_PATH=/usr/local/share/lua/5.1/?.lua;;
 
-EXPOSE 8000 8001 8002
+# EXPOSE 8000 8001 8002
 
 #uncomment kong.yaml as well
 
