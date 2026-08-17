@@ -2,6 +2,8 @@
 
 Installs **istiod** and **istio-ingressgateway**. The ingress Service is `type: LoadBalancer` with the AWS **NLB** annotation (not ALB).
 
+Why not Kubernetes Ingress + ALB, and why we do not run both: **[INGRESS-ALB-VS-GATEWAY-NLB.md](INGRESS-ALB-VS-GATEWAY-NLB.md)**.
+
 **Extra AWS cost:** NLB + public IPv4 ≈ **$0.66/day**. ClusterIP Kong stays as-is; the NLB is only on the Istio ingress Service.
 
 ```bash
