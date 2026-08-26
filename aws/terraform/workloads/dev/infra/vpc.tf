@@ -16,7 +16,7 @@ resource "aws_vpc" "this" {
 
   tags = {
     Name     = "${var.cluster_name}-vpc"
-    Pipeline = "github-actions2"
+    Pipeline = "github-actions3"
   }
 }
 
