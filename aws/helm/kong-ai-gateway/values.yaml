@@ -29,3 +29,8 @@ istio:
     hosts:
       - "*"
     port: 80
+
+# Apply workloads Terraform (role kong-ai-dev-vertex) before Argo syncs this.
+# Empty roleArn = no IRSA (pod cannot call GCP WIF).
+irsa:
+  roleArn: "arn:aws:iam::593024667763:role/kong-ai-dev-vertex"

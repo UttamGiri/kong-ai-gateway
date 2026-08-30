@@ -22,3 +22,8 @@ output "budget_name" {
 output "budget_limit_usd" {
   value = var.budget_limit_usd
 }
+
+output "vertex_irsa" {
+  description = "Confirm account ID + role ARN to GCP. Do not send OIDC issuer, JWKS, or keys."
+  value       = try(module.demo[0].vertex_irsa, null)
+}

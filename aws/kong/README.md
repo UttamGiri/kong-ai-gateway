@@ -24,3 +24,9 @@ docker build -t kong-ai-gateway:local aws/kong
 ```
 
 End-to-end pipeline (login, Action, Docker Hub, Helm, Argo CD): **[PIPELINE.md](PIPELINE.md)**.
+
+Call Vertex Gemini from this Kong pod:
+
+- Lab (GCP SA JSON key in a Secret): **[VERTEX-JSON-KEY.md](VERTEX-JSON-KEY.md)**
+- Better (AWS IRSA + GCP WIF, no JSON key): **[VERTEX-WIF.md](VERTEX-WIF.md)**
+- GCP paste + how the pod uses it + Terraform IRSA: **[VERTEX-GCP-PROVIDED.md](VERTEX-GCP-PROVIDED.md)**
