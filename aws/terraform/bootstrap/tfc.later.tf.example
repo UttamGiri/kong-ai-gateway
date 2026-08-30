@@ -1,0 +1,86 @@
+# Apply this later, after terraform login, when you want HCP Terraform
+# workspaces and TFC_AWS_* variables created by code.
+# Rename to tfc.tf (or copy into this folder as tfc.tf) and re-run apply.
+
+resource "tfe_organization" "this" {
+  count = var.create_tfc_organization ? 1 : 0
+
+  name  = var.tfc_organization_name
+  email = var.tfc_organization_email
+
+  lifecycle {
+    precondition {
+      condition     = var.tfc_organization_email != ""
+      error_message = "Set tfc_organization_email when create_tfc_organization is true."
+    }
+  }
+}
+
+data "tfe_organization" "this" {
+  count = var.create_tfc_organization ? 0 : 1
+
+  name = var.tfc_organization_name
+}
+
+locals {
+  tfc_organization_name = var.create_tfc_organization ? tfe_organization.this[0].name : data.tfe_organization.this[0].name
+
+  tfc_workspaces = {
+    bootstrap = {
+      name              = var.tfc_bootstrap_workspace_name
+      working_directory = "aws/terraform/bootstrap"
+    }
+    workloads = {
+      name              = var.tfc_workspace_name
+      working_directory = "aws/terraform/workloads"
+    }
+  }
+}
+
+resource "tfe_project" "this" {
+  organization = local.tfc_organization_name
+  name         = var.tfc_project_name
+}
+
+resource "tfe_workspace" "this" {
+  for_each = local.tfc_workspaces
+
+  name              = each.value.name
+  organization      = local.tfc_organization_name
+  project_id        = tfe_project.this.id
+  working_directory = each.value.working_directory
+  tag_names         = ["aws", "kong-ai-gateway", each.key]
+}
+
+resource "tfe_variable" "aws_provider_auth" {
+  for_each = tfe_workspace.this
+
+  workspace_id = each.value.id
+  key          = "TFC_AWS_PROVIDER_AUTH"
+  value        = "true"
+  category     = "env"
+
+  description = "Enable HCP Terraform dynamic credentials for AWS."
+}
+
+resource "tfe_variable" "aws_run_role_arn" {
+  for_each = tfe_workspace.this
+
+  workspace_id = each.value.id
+  key          = "TFC_AWS_RUN_ROLE_ARN"
+  value        = aws_iam_role.tfc_run.arn
+  category     = "env"
+
+  description = "IAM role assumed by HCP Terraform runs via OIDC."
+}
+
+resource "tfe_variable" "aws_region" {
+  for_each = tfe_workspace.this
+
+  workspace_id = each.value.id
+  key          = "AWS_REGION"
+  value        = var.aws_region
+  category     = "env"
+
+  description = "Default region for the AWS provider in workspace runs."
+}

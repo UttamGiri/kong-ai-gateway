@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kong-ai-gateway.name" . }}
+  labels:
+    {{- include "kong-ai-gateway.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "kong-ai-gateway.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "kong-ai-gateway.labels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "kong-ai-gateway.name" . }}
+    spec:
+      serviceAccountName: {{ include "kong-ai-gateway.name" . }}
+      containers:
+        - name: gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: KONG_ADMIN_GUI_LISTEN
+              value: "0.0.0.0:{{ .Values.service.managerPort }}"
+            {{- if .Values.istio.publicHost }}
+            - name: KONG_ADMIN_GUI_URL
+              value: "http://{{ .Values.istio.publicHost }}:{{ .Values.service.managerPort }}"
+            - name: KONG_ADMIN_GUI_API_URL
+              value: "http://{{ .Values.istio.publicHost }}:{{ .Values.service.adminPort }}"
+            {{- end }}
+            - name: KONG_NGINX_WORKER_PROCESSES
+              value: "1"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+            - name: admin
+              containerPort: {{ .Values.service.adminPort }}
+            - name: manager
+              containerPort: {{ .Values.service.managerPort }}
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: admin
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: admin
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}

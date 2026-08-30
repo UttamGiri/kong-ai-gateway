@@ -1,0 +1,101 @@
+# CLI-driven HCP Terraform for workloads. No VCS on this workspace.
+# Start from Actions → Terraform workloads → Run workflow → choose plan or apply.
+name: Terraform workloads
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: Terraform command
+        type: choice
+        required: true
+        default: plan
+        options:
+          - plan
+          - apply
+      enabled:
+        description: true = create/keep demo AWS. false = apply destroys the whole stack (hard delete).
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  TF_CLOUD_ORGANIZATION: vaflt-org
+  TF_WORKSPACE: kong-ai-gateway-aws-workload
+  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_enabled: ${{ inputs.enabled }}
+  TF_VAR_node_instance_type: t3.medium
+
+jobs:
+  terraform:
+    name: ${{ inputs.command }} / enabled=${{ inputs.enabled }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.command == 'apply' && 'workloads' || 'plan' }}
+    defaults:
+      run:
+        working-directory: aws/terraform/workloads/dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          set +e
+          terraform plan -input=false -no-color -detailed-exitcode -out=tfplan \
+            | tee plan.txt \
+            | python3 "$GITHUB_WORKSPACE/.github/scripts/terraform_job_summary.py" --phase colorize-stream
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Plan summary
+        if: always()
+        working-directory: .
+        run: |
+          python3 .github/scripts/terraform_job_summary.py \
+            --phase plan \
+            --exitcode "${{ steps.plan.outputs.exitcode }}" \
+            --log aws/terraform/workloads/dev/plan.txt \
+            --workdir aws/terraform/workloads/dev \
+            --plan-file aws/terraform/workloads/dev/tfplan
+
+      - name: Fail on plan error
+        if: ${{ steps.plan.outputs.exitcode == '1' }}
+        run: exit 1
+
+      - name: Terraform apply
+        id: apply
+        if: ${{ inputs.command == 'apply' && steps.plan.outputs.exitcode != '1' }}
+        run: |
+          set +e
+          terraform apply -input=false -no-color tfplan \
+            | tee apply.txt \
+            | python3 "$GITHUB_WORKSPACE/.github/scripts/terraform_job_summary.py" --phase colorize-stream
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Apply summary
+        if: ${{ always() && inputs.command == 'apply' && steps.plan.outputs.exitcode != '1' }}
+        working-directory: .
+        run: |
+          python3 .github/scripts/terraform_job_summary.py \
+            --phase apply \
+            --exitcode "${{ steps.apply.outputs.exitcode || 1 }}" \
+            --log aws/terraform/workloads/dev/apply.txt \
+            --workdir aws/terraform/workloads/dev \
+            --plan-file aws/terraform/workloads/dev/tfplan
+
+      - name: Fail on apply error
+        if: ${{ inputs.command == 'apply' && steps.apply.outcome != 'skipped' && steps.apply.outputs.exitcode != '0' }}
+        run: exit 1

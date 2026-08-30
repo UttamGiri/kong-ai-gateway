@@ -1,0 +1,19 @@
+# Phase 2 only. Do not enable this on the first apply.
+#
+# After bootstrap has been applied with the local backend:
+#   1. Copy the cloud block below over the backend "local" block in versions.tf
+#   2. Set organization to tfc_organization_name
+#   3. terraform init -migrate-state
+#
+# That uploads aws/terraform/bootstrap/terraform.tfstate to
+# app.terraform.io workspace kong-ai-gateway-aws-bootstrap.
+
+terraform {
+  cloud {
+    organization = "vaflt-org"
+
+    workspaces {
+      name = "kong-ai-gateway-aws-bootstrap"
+    }
+  }
+}
