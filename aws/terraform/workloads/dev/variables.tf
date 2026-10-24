@@ -50,3 +50,9 @@ variable "budget_alert_email" {
   description = "Email for $20/month budget notices. Confirm the AWS subscription mail once. Empty = budget in console only, no email."
   default     = ""
 }
+
+variable "kubectl_admin_principal_arns" {
+  type        = list(string)
+  description = "IAM user or role ARNs that may kubectl/Helm (EKS access entries). Set in HCP workspace variables."
+  default     = ["arn:aws:iam::593024667763:user/uttam-kubectl-demo"]
+}

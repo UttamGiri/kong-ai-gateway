@@ -18,6 +18,10 @@ resource "aws_eks_cluster" "this" {
 
   enabled_cluster_log_types = []
 
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
   timeouts {
     create = "30m"
     delete = "30m"

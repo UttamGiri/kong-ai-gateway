@@ -27,3 +27,8 @@ output "vertex_irsa" {
   description = "Confirm account ID + role ARN to GCP. Do not send OIDC issuer, JWKS, or keys."
   value       = try(module.demo[0].vertex_irsa, null)
 }
+
+output "kubectl_access_entries" {
+  description = "EKS access entries for kubectl/Helm principals."
+  value       = try(module.demo[0].kubectl_access_entries, null)
+}

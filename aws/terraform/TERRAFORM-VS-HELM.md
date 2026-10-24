@@ -175,7 +175,7 @@ Never. Separate workspaces or S3 keys (`workloads/dev`, `workloads/prod`). One f
 HCP bills workspaces/runs, not “number of AWS resources in state.” Two small workspaces are cheaper in *risk* than one giant apply. Helm is free of that bill.
 
 **Where does the kubeconfig / access entry live?**  
-Cluster access is AWS IAM + EKS access entries, not Helm. If it is not in workloads Terraform yet, it is still CLI — do not stuff it into a Helm chart.
+Access entries: **Terraform** `workloads/dev/infra/access_entries.tf`. kubeconfig: local laptop only. Namespaces: **Helm** — never put either in the wrong tool.
 
 **State has secrets — is that why Helm stays out?**  
 Partly. `helm_release` stores values (passwords, license) in Terraform state. Argo / Kubernetes secrets stay on the cluster (and in your secret manager), not in the EKS state file.

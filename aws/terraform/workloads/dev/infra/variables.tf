@@ -13,3 +13,9 @@ variable "node_instance_type" {
 variable "node_desired_size" {
   type = number
 }
+
+variable "kubectl_admin_principal_arns" {
+  type        = list(string)
+  description = "IAM user or role ARNs granted cluster admin via EKS access entries."
+  default     = []
+}

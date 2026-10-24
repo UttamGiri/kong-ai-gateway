@@ -22,3 +22,8 @@ output "vertex_irsa" {
     role_arn       = aws_iam_role.kong_ai_vertex.arn
   }
 }
+
+output "kubectl_access_entries" {
+  description = "EKS access entries for kubectl/Helm principals."
+  value       = var.kubectl_admin_principal_arns
+}

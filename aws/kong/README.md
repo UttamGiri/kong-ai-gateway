@@ -12,6 +12,8 @@ Plugins are **not** inside the Helm chart. They live in `plugins/`. The Dockerfi
 aws/kong/
 ├── Dockerfile                 # FROM kong/kong-gateway:3.9 + COPY plugins
 ├── kong.yml                   # DB-less config (plugins enabled)
+├── examples/
+│   └── petstore-mcp-server-2.1.yaml         # AI MCP Server entity (2.x)
 └── plugins/
     ├── custom-header/         # X-Kong-AI-Gateway
     └── custom-request-id/     # X-Request-Id
@@ -30,3 +32,5 @@ Call Vertex Gemini from this Kong pod:
 - Lab (GCP SA JSON key in a Secret): **[VERTEX-JSON-KEY.md](VERTEX-JSON-KEY.md)**
 - Better (AWS IRSA + GCP WIF, no JSON key): **[VERTEX-WIF.md](VERTEX-WIF.md)**
 - GCP paste + how the pod uses it + Terraform IRSA: **[VERTEX-GCP-PROVIDED.md](VERTEX-GCP-PROVIDED.md)**
+
+REST → MCP (**AI Gateway 2.x**): **[AI-GATEWAY-MCP.md](AI-GATEWAY-MCP.md)** · **[MCP-KONNECT-UI.md](MCP-KONNECT-UI.md)** (UI types, no MCP Registry menu) · **[MCP-ENTERPRISE-REGISTRY.md](MCP-ENTERPRISE-REGISTRY.md)** (Listener merge / on-prem) · **[examples/petstore-mcp-server-2.1.yaml](examples/petstore-mcp-server-2.1.yaml)**
