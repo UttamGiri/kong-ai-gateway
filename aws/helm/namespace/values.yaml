@@ -1,0 +1,8 @@
+namespaces:
+  argocd:
+    name: argocd
+    labels: {}
+  kongAiGateway:
+    name: kong-ai-gateway
+    labels:
+      istio-injection: enabled

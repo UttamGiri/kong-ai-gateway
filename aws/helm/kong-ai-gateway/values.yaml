@@ -1,0 +1,36 @@
+image:
+  repository: docker.io/uttamgiri32/kong-ai-gateway
+  tag: "0.1.15"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  adminPort: 8001
+  managerPort: 8002
+
+istio:
+  enabled: true
+  # NLB hostname from: kubectl -n istio-ingress get svc istio-ingressgateway
+  publicHost: a406234f3b9514370af20af3e3bcbc87-e7498624ae20e839.elb.us-east-2.amazonaws.com
+  gateway:
+    selector:
+      istio: ingressgateway
+    hosts:
+      - "*"
+    port: 80
+
+# Apply workloads Terraform (role kong-ai-dev-vertex) before Argo syncs this.
+# Empty roleArn = no IRSA (pod cannot call GCP WIF).
+irsa:
+  roleArn: "arn:aws:iam::593024667763:role/kong-ai-dev-vertex"

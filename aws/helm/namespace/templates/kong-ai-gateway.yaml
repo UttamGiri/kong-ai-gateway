@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespaces.kongAiGateway.name }}
+  labels:
+    app.kubernetes.io/name: kong-ai-gateway
+    app.kubernetes.io/part-of: kong-ai-gateway-platform
+    istio-injection: enabled
+    {{- range $k, $v := .Values.namespaces.kongAiGateway.labels }}
+    {{ $k }}: {{ $v | quote }}
+    {{- end }}

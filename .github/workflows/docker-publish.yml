@@ -1,0 +1,75 @@
+# CLI-driven: build image, bump Helm image.tag, Argo CD redeploys.
+# Actions → Docker publish Kong AI Gateway → Run workflow from develop.
+# Secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+# Image tag is always values.yaml patch + 1. No workflow input.
+# A git push does not build (same as Terraform workloads).
+name: Docker publish Kong AI Gateway
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-push:
+    name: build / push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Bump image tag
+        run: |
+          set -euo pipefail
+          VAL=aws/helm/kong-ai-gateway/values.yaml
+          CURRENT=$(sed -n 's/^  tag: "\(.*\)"/\1/p' "$VAL")
+          if [ -z "$CURRENT" ]; then
+            echo "Could not read image.tag from $VAL"
+            exit 1
+          fi
+          IFS=. read -r major minor patch <<< "$CURRENT"
+          if [ -z "${major:-}" ] || [ -z "${minor:-}" ] || [ -z "${patch:-}" ]; then
+            echo "image.tag must be major.minor.patch, got: ${CURRENT}"
+            exit 1
+          fi
+          TAG="${major}.${minor}.$((patch + 1))"
+          echo "IMAGE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "Bumped image tag ${CURRENT} -> ${TAG}"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: aws/kong
+          file: aws/kong/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/kong-ai-gateway:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/kong-ai-gateway:${{ github.sha }}
+
+      - name: Pin Helm image.tag
+        run: |
+          set -euo pipefail
+          VAL=aws/helm/kong-ai-gateway/values.yaml
+          sed -i -E "s/^(  tag: ).*/\1\"${IMAGE_TAG}\"/" "$VAL"
+          grep -n 'tag:' "$VAL"
+
+      - name: Commit values.yaml
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add aws/helm/kong-ai-gateway/values.yaml
+          git commit -m "chore: kong-ai-gateway image tag ${IMAGE_TAG}"
+          git push origin "HEAD:${{ github.ref_name }}"

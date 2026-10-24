@@ -1,0 +1,42 @@
+# AI Gateway 2.x — Petstore REST → MCP (AI MCP Server entity)
+# Apply: kongctl apply -f petstore-mcp-server-2.1.yaml --auto-approve
+# On-prem Kong Gateway only (no entity CP): deck file ai2kong --source this-file --output-file kong.yaml
+#
+# MCP URL for clients: https://YOUR-GATEWAY/petstore
+# tools/call arg for petId: path_petId (not petId)
+
+ai_gateway_mcp_servers:
+  - ref: petstore-mcp
+    ai_gateway: !lookup { id: !env AI_GATEWAY_ID }
+    name: petstore-mcp
+    display_name: petstore-mcp
+    type: conversion-listener
+    enabled: true
+    policies: []
+    access:
+      acl_attribute_type: consumer
+      acls:
+        allow: []
+      default_tool_acls:
+        deny: []
+    config:
+      url: https://petstore3.swagger.io/api/v3
+      route:
+        paths:
+          - /petstore
+      logging:
+        payloads: false
+      server:
+        timeout: 60000
+    tools:
+      - name: get_pet_by_id
+        description: Get pet details using a pet ID
+        method: GET
+        path: /petstore/pet/{petId}
+        parameters:
+          - name: petId
+            in: path
+            required: true
+            description: ID of the pet to retrieve
+            schema:
+              type: integer
