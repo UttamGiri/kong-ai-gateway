@@ -551,6 +551,7 @@ Insomnia/Cursor **are** the MCP client (URL + optional **AI Auth Strategy** / AP
 
 ## References
 
+- [Kong AI Gateway 2.0: How to Create MCP Servers (YouTube)](https://www.youtube.com/watch?v=_azfxIliMgI) — upstream server + listener merge in UI
 - [Map RESTful API to MCP tools](https://developer.konghq.com/ai-gateway/map-api-to-mcp-tools/)
 - [AI MCP Server — server modes](https://developer.konghq.com/ai-gateway/entities/ai-mcp-server/)
 - [AI MCP Proxy plugin](https://developer.konghq.com/plugins/ai-mcp-proxy/)

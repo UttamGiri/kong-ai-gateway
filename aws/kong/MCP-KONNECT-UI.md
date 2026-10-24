@@ -36,6 +36,139 @@ flowchart LR
 
 ---
 
+## Passthrough listener vs upstream server vs listener
+
+These three are often confused because all involve an **existing MCP server** upstream. They are **different UI types** with different client URLs.
+
+| | **Passthrough listener** | **Upstream server** | **Listener** |
+| --- | --- | --- | --- |
+| **Role** | **Client-facing proxy** for **one** MCP | **Backend registration** for merge | **Client-facing hub** that **merges** sources |
+| **Client connects here?** | **Yes** — its route (e.g. `/mcp/jira`) | **No** — not a public MCP endpoint by itself | **Yes** — its route (e.g. `/mcp/devtools`) |
+| **How many upstream MCPs** | Exactly **one** | One per entity (Jira, GitHub, …) | **Many** via **`sources`** |
+| **REST → tools?** | No | No | Only if a **`conversion-only`** source is in `sources` |
+| **`tools/list`** | From that one upstream (proxied) | Used **by listener** to fetch tools | **Merged** from all `sources` |
+| **Typical UI setup** | **One** New MCP Server | **One** New MCP Server per MCP backend | **One** Listener + **Sources** = upstream names |
+| **When to use** | Single team, single MCP, no merge | Building block before a **Listener** | Jira **+** GitHub (or more) on **one** URL |
+
+### Passthrough listener (standalone)
+
+One MCP server, one Kong route. Kong forwards MCP bytes; clients never need the upstream URL.
+
+```mermaid
+flowchart LR
+  C[Client] --> P["Passthrough /mcp/jira"]
+  P --> J[Jira MCP]
+```
+
+### Upstream server **alone** (not enough for clients)
+
+Registers Jira MCP so a **Listener** can pull its tool list and route calls. Agents should **not** use the upstream-server entity URL as their MCP config (it is not the merge front door).
+
+```mermaid
+flowchart LR
+  C[Client] -.->|do not connect here| US[Upstream server entity]
+  US --> J[Jira MCP]
+```
+
+### Upstream server **+ Listener** (merge native MCPs)
+
+Create **`upstream-server` jira-upstream** and **`upstream-server` github-upstream**, then **`listener`** with **Sources** = both names. Client uses **only** the listener path.
+
+```mermaid
+flowchart LR
+  C[Client] --> L["Listener /mcp/devtools"]
+  L --> U1[upstream-server jira]
+  L --> U2[upstream-server github]
+  U1 --> J[Jira MCP]
+  U2 --> G[GitHub MCP]
+```
+
+### Passthrough vs upstream + listener (same upstream, different scale)
+
+| Scenario | Use |
+| --- | --- |
+| **Only Jira MCP**, one URL | **Passthrough listener** — simpler, one entity |
+| **Jira + GitHub MCP**, one URL | **Upstream server** × 2 + **Listener** — passthrough × 2 would mean **two** client URLs |
+
+**Rule:** Passthrough = **1:1** client-to-MCP. **Upstream server** = **register for merge**. **Listener** = **where clients connect** when merging.
+
+---
+
+## Multiple passthrough vs listener aggregation (correction)
+
+### Can you run many passthrough MCP servers?
+
+**Yes.** You can create **many** **Passthrough listener** entities (Jira at `/mcp/jira`, GitHub at `/mcp/github`, …). Each is a **separate** client URL and **separate** `tools/list`.
+
+That is **not** aggregation—it is **N front doors**, not one merged catalog.
+
+```mermaid
+flowchart TB
+  C[Agent]
+  C --> P1["Passthrough /mcp/jira"]
+  C --> P2["Passthrough /mcp/github"]
+  P1 --> J[Jira MCP]
+  P2 --> G[GitHub MCP]
+```
+
+### Can a listener aggregate passthrough servers?
+
+**No.** **Listener `sources`** may list only **`conversion-only`** and **`upstream-server`** names — **not** **passthrough-listener** (and not **conversion-listener**).
+
+| In **Listener → Sources** | Allowed? |
+| --- | --- |
+| `upstream-server` (jira-upstream) | **Yes** |
+| `conversion-only` (graph-tools) | **Yes** |
+| `passthrough-listener` (jira-passthrough) | **No** |
+| `conversion-listener` (petstore-mcp) | **No** |
+
+So you do **not** build aggregation by “adding passthroughs to a listener.” You use **`upstream-server`** entries for each native MCP you want in the hub.
+
+### Multiple passthrough **and** a listener (same org)
+
+You **can** have both in one gateway, but they serve **different clients/paths**:
+
+| Config | Client experience |
+| --- | --- |
+| Passthrough `/mcp/jira` only | Legacy or team-specific direct proxy |
+| Listener `/mcp/devtools` with `sources: [jira-upstream, github-upstream]` | **One** URL, merged tools |
+
+Avoid pointing **passthrough** and **upstream-server** at the **same** Jira MCP for the **same** audience unless you intend two entry points (confusing). Pick **passthrough** *or* **upstream + listener** for that backend.
+
+### Then how is passthrough different from upstream-server?
+
+Both talk to an **existing MCP server** upstream. The difference is **who the client connects to** and **whether merge is possible**.
+
+| | **Passthrough listener** | **Upstream server** |
+| --- | --- | --- |
+| **Client MCP URL** | This entity’s route | **Listener** route (not upstream-server itself) |
+| **MCP proxy for clients** | **Yes** — full passthrough | **No** — internal source for listener |
+| **In listener `sources`?** | **No** | **Yes** |
+| **Merge multiple MCPs** | Only by giving client **multiple URLs** | **Yes**, via **listener** |
+| **Entity count for 2 MCPs, 1 URL** | 2 passthroughs (2 URLs) | 2 upstream-servers + 1 listener (1 URL) |
+
+```mermaid
+flowchart TB
+  subgraph PT ["Passthrough path two URLs"]
+    C1[Client] --> PA["/mcp/jira passthrough"]
+    C1 --> PB["/mcp/github passthrough"]
+  end
+  subgraph US ["Upstream plus listener one URL"]
+    C2[Client] --> L["Listener /mcp/devtools"]
+    L --> U1[upstream-server jira]
+    L --> U2[upstream-server github]
+  end
+```
+
+**Same Jira MCP upstream, two patterns:**
+
+- **Passthrough:** Insomnia URL = `https://gateway/mcp/jira` → Kong → Jira MCP.  
+- **Upstream + listener:** Insomnia URL = `https://gateway/mcp/devtools` → Kong listener → **routes** to jira-upstream → Jira MCP.
+
+Traffic to Jira may look similar on the wire; **client configuration and tool catalog shape** differ (one catalog vs two; one URL vs two).
+
+---
+
 ## Enterprise patterns → UI steps
 
 ### A — Graph + Jira REST + ServiceNow REST, one URL
@@ -133,7 +266,14 @@ flowchart TB
 
 ---
 
+## Video (Kong official)
+
+- [Kong AI Gateway 2.0: How to Create MCP Servers](https://www.youtube.com/watch?v=_azfxIliMgI) — Konnect **MCP Servers** UI: **upstream server** (DeepWiki, Context7), **listener** aggregation into one path, **Insomnia** MCP client demo. Complements the Petstore **conversion listener** lab (REST→MCP is not the focus of this clip).
+
+---
+
 ## References
 
 - [Aggregate MCP tools from multiple AI MCP Server entities](https://developer.konghq.com/ai-gateway/aggregate-mcp-tools/)
 - [AI MCP Server entity](https://developer.konghq.com/ai-gateway/entities/ai-mcp-server/)
+- **[MCP-KONG-DOCS-VERIFICATION.md](MCP-KONG-DOCS-VERIFICATION.md)** — local docs checked against official Kong pages

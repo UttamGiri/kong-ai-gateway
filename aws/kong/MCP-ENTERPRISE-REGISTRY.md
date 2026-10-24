@@ -357,6 +357,7 @@ flowchart TD
 
 ## 8. References
 
+- [Kong AI Gateway 2.0: How to Create MCP Servers (YouTube)](https://www.youtube.com/watch?v=_azfxIliMgI) — listener hub + upstream servers in Konnect UI
 - [Configure Kong AI Gateway on-prem](https://developer.konghq.com/ai-gateway/configure-on-prem/) — entity → plugin mapping; **`upstream-server`** limitation  
 - [AI MCP Server entity — server modes](https://developer.konghq.com/ai-gateway/entities/ai-mcp-server/) — listener aggregation, **`sources`**  
 - [deck file ai2kong](https://developer.konghq.com/deck/file/ai2kong/)  

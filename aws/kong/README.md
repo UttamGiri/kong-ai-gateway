@@ -33,4 +33,4 @@ Call Vertex Gemini from this Kong pod:
 - Better (AWS IRSA + GCP WIF, no JSON key): **[VERTEX-WIF.md](VERTEX-WIF.md)**
 - GCP paste + how the pod uses it + Terraform IRSA: **[VERTEX-GCP-PROVIDED.md](VERTEX-GCP-PROVIDED.md)**
 
-REST → MCP (**AI Gateway 2.x**): **[AI-GATEWAY-MCP.md](AI-GATEWAY-MCP.md)** · **[MCP-KONNECT-UI.md](MCP-KONNECT-UI.md)** (UI types, no MCP Registry menu) · **[MCP-ENTERPRISE-REGISTRY.md](MCP-ENTERPRISE-REGISTRY.md)** (Listener merge / on-prem) · **[examples/petstore-mcp-server-2.1.yaml](examples/petstore-mcp-server-2.1.yaml)**
+REST → MCP (**AI Gateway 2.x**): **[AI-GATEWAY-MCP.md](AI-GATEWAY-MCP.md)** · Video: [How to Create MCP Servers](https://www.youtube.com/watch?v=_azfxIliMgI) · **[MCP-KONNECT-UI.md](MCP-KONNECT-UI.md)** · **[MCP-ENTERPRISE-REGISTRY.md](MCP-ENTERPRISE-REGISTRY.md)** · **[MCP-KONG-DOCS-VERIFICATION.md](MCP-KONG-DOCS-VERIFICATION.md)** (vs Kong official docs) · **[examples/petstore-mcp-server-2.1.yaml](examples/petstore-mcp-server-2.1.yaml)**
