@@ -268,7 +268,8 @@ flowchart TB
 
 ## Video (Kong official)
 
-- [Kong AI Gateway 2.0: How to Create MCP Servers](https://www.youtube.com/watch?v=_azfxIliMgI) — Konnect **MCP Servers** UI: **upstream server** (DeepWiki, Context7), **listener** aggregation into one path, **Insomnia** MCP client demo. Complements the Petstore **conversion listener** lab (REST→MCP is not the focus of this clip).
+- [Kong AI Gateway 2.0: How to Create MCP Servers](https://www.youtube.com/watch?v=_azfxIliMgI) — Konnect **MCP Servers** UI: **upstream server** (DeepWiki, Context7), **listener** aggregation into one path, brief Insomnia demo. Complements the Petstore **conversion listener** lab (REST→MCP is not the focus of this clip).
+- [Insomnia v12: MCP Client Debugging & NL Mock Servers](https://www.youtube.com/watch?v=ah5W-JNzOIs) — **Testing MCP in Insomnia**: MCP Clients tab, connect, **tools/list**, **Call Tool**, Params/Headers/Console, OAuth debugging. Use after your gateway route works (Petstore `/petstore` or listener hub URL).
 
 ---
 

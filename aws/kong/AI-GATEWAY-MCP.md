@@ -541,6 +541,8 @@ npx -y @modelcontextprotocol/inspector@0.22.0 --cli \
   --tool-name get_pet_by_id --tool-arg path_petId=1
 ```
 
+**Insomnia (GUI):** MCP Clients → same URL → Connect → Call Tool. Walkthrough: [Insomnia v12 MCP Client Debugging (YouTube)](https://www.youtube.com/watch?v=ah5W-JNzOIs).
+
 ---
 
 ## 9. Auth and MCP clients
@@ -552,6 +554,7 @@ Insomnia/Cursor **are** the MCP client (URL + optional **AI Auth Strategy** / AP
 ## References
 
 - [Kong AI Gateway 2.0: How to Create MCP Servers (YouTube)](https://www.youtube.com/watch?v=_azfxIliMgI) — upstream server + listener merge in UI
+- [Insomnia v12: MCP Client Debugging (YouTube)](https://www.youtube.com/watch?v=ah5W-JNzOIs) — test **tools/list** and **tools/call** in Insomnia MCP Clients
 - [Map RESTful API to MCP tools](https://developer.konghq.com/ai-gateway/map-api-to-mcp-tools/)
 - [AI MCP Server — server modes](https://developer.konghq.com/ai-gateway/entities/ai-mcp-server/)
 - [AI MCP Proxy plugin](https://developer.konghq.com/plugins/ai-mcp-proxy/)
